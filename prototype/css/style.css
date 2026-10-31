@@ -94,6 +94,23 @@ button { font-family: inherit; cursor: pointer; }
 
 .topbar-right { display: flex; align-items: center; gap: 10px; flex: none; }
 
+/* 回到作品集的入口：挂在顶栏右侧最前面，用最轻的重量，
+   不抢「分析我的视频」这个主按钮的注意力 */
+.back-link {
+  font-size: 12px;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  transition: all .16s ease;
+}
+.back-link:hover {
+  background: #fff;
+  border-color: var(--line);
+  color: var(--text);
+}
+
 .stat-pill {
   font-size: 12px; color: var(--text-2);
   padding: 7px 12px;

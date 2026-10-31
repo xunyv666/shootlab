@@ -15,3 +15,6 @@ node_modules/
 # 系统
 .DS_Store
 Thumbs.db
+
+# 网站仓库的部署工作副本（每次从远端重新克隆）
+_site/

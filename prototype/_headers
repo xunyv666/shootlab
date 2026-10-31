@@ -1,20 +1,27 @@
 # Cloudflare Pages 头部配置（只有 Cloudflare 会读这个文件，GitHub Pages 会忽略）
-# 目的：页面本体不缓存，避免改了前端还看到旧版本；
-#       wasm / 姿态模型 / 示例视频体积大且极少变动，长缓存。
 
+# 全站安全头。这里只管「浏览器怎么对待这个站」，不涉及缓存，所以任何路径都套用
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+
+# 页面本体：每次都回源校验，改了前端立刻生效，不会让旧版本卡在缓存里
 /
   Cache-Control: public, max-age=0, must-revalidate
-  X-Content-Type-Options: nosniff
 
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+# 第三方库与姿态模型：体积大、极少变动
 /vendor/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
 
 /models/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
 
+# 示例媒体
 /media/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
   Accept-Ranges: bytes

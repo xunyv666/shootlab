@@ -1,0 +1,17 @@
+# 依赖
+node_modules/
+.bin/
+
+# 工具与工作区状态
+.workbuddy/
+
+# 训练/测试用的原始素材（几百 MB，不进仓库）
+/media/
+*.log
+
+# 本地下载的样例视频
+/投篮预测样例.mp4
+
+# 系统
+.DS_Store
+Thumbs.db

@@ -1,0 +1,198 @@
+{
+ "meta": {
+  "label": "booker_side",
+  "video": "booker_side_720p.mp4",
+  "source_frames": 1500,
+  "detected": 1453,
+  "shooting_side": "r",
+  "span_norm": 0.2198,
+  "span_cm": null,
+  "fps_note": "pose 采样步长见提取参数"
+ },
+ "shots": [
+  {
+   "t_release": 16.64,
+   "t_dip": 15.84,
+   "window": [
+    15.24,
+    17.24
+   ],
+   "wrist_peak": 1.229,
+   "wrist_rise": 0.478,
+   "shoulder_span": 0.4781,
+   "elbow_release": 63.6,
+   "elbow_max": 93.0,
+   "forearm_release": -56.3,
+   "knee_min": 96.6,
+   "knee_release": 124.2,
+   "lean_release": 1.5,
+   "rise_time": 0.8,
+   "hip_rise": 0.014,
+   "follow_hold": 0.24,
+   "vis_mean": 0.95
+  },
+  {
+   "t_release": 28.0,
+   "t_dip": 28.08,
+   "window": [
+    26.6,
+    28.6
+   ],
+   "wrist_peak": 2.104,
+   "wrist_rise": 3.022,
+   "shoulder_span": 0.0349,
+   "elbow_release": 107.6,
+   "elbow_max": 179.9,
+   "forearm_release": 28.3,
+   "knee_min": 87.0,
+   "knee_release": 141.8,
+   "lean_release": 2.1,
+   "rise_time": -0.08,
+   "hip_rise": -3.061,
+   "follow_hold": 0.04,
+   "vis_mean": 0.17
+  },
+  {
+   "t_release": 34.56,
+   "t_dip": 34.4,
+   "window": [
+    33.2,
+    35.16
+   ],
+   "wrist_peak": 1.52,
+   "wrist_rise": 1.015,
+   "shoulder_span": 0.3569,
+   "elbow_release": 161.7,
+   "elbow_max": 171.2,
+   "forearm_release": 45.9,
+   "knee_min": 123.0,
+   "knee_release": 158.6,
+   "lean_release": -11.9,
+   "rise_time": 0.16,
+   "hip_rise": 0.076,
+   "follow_hold": 0.28,
+   "vis_mean": 0.91
+  },
+  {
+   "t_release": 37.08,
+   "t_dip": 36.48,
+   "window": [
+    35.68,
+    37.64
+   ],
+   "wrist_peak": 1.376,
+   "wrist_rise": 3.458,
+   "shoulder_span": 0.0506,
+   "elbow_release": 110.8,
+   "elbow_max": 179.6,
+   "forearm_release": 75.5,
+   "knee_min": 67.5,
+   "knee_release": 91.9,
+   "lean_release": -78.1,
+   "rise_time": 0.6,
+   "hip_rise": 0.024,
+   "follow_hold": 0.04,
+   "vis_mean": 0.17
+  },
+  {
+   "t_release": 41.92,
+   "t_dip": 41.76,
+   "window": [
+    40.52,
+    42.52
+   ],
+   "wrist_peak": 1.447,
+   "wrist_rise": 5.795,
+   "shoulder_span": 0.0826,
+   "elbow_release": 117.9,
+   "elbow_max": 155.3,
+   "forearm_release": 47.1,
+   "knee_min": 75.5,
+   "knee_release": 117.8,
+   "lean_release": -2.0,
+   "rise_time": 0.16,
+   "hip_rise": -0.023,
+   "follow_hold": 0.08,
+   "vis_mean": 0.16
+  },
+  {
+   "t_release": 51.56,
+   "t_dip": 51.64,
+   "window": [
+    50.2,
+    52.16
+   ],
+   "wrist_peak": 1.23,
+   "wrist_rise": 0.544,
+   "shoulder_span": 0.5186,
+   "elbow_release": 146.2,
+   "elbow_max": 176.6,
+   "forearm_release": 42.8,
+   "knee_min": 162.0,
+   "knee_release": 171.5,
+   "lean_release": 9.6,
+   "rise_time": -0.08,
+   "hip_rise": -0.008,
+   "follow_hold": 0.12,
+   "vis_mean": 0.96
+  }
+ ],
+ "agg": {
+  "elbow_release": {
+   "mean": 117.97,
+   "sd": 31.16,
+   "n": 6,
+   "min": 63.6,
+   "max": 161.7
+  },
+  "forearm_release": {
+   "mean": 30.55,
+   "sd": 41.29,
+   "n": 6,
+   "min": -56.3,
+   "max": 75.5
+  },
+  "knee_min": {
+   "mean": 101.93,
+   "sd": 32.11,
+   "n": 6,
+   "min": 67.5,
+   "max": 162.0
+  },
+  "rise_time": {
+   "mean": 0.26,
+   "sd": 0.33,
+   "n": 6,
+   "min": -0.08,
+   "max": 0.8
+  },
+  "lean_release": {
+   "mean": -13.13,
+   "sd": 29.75,
+   "n": 6,
+   "min": -78.1,
+   "max": 9.6
+  },
+  "hip_rise": {
+   "mean": -0.5,
+   "sd": 1.15,
+   "n": 6,
+   "min": -3.06,
+   "max": 0.08
+  },
+  "wrist_peak": {
+   "mean": 1.48,
+   "sd": 0.3,
+   "n": 6,
+   "min": 1.23,
+   "max": 2.1
+  },
+  "follow_hold": {
+   "mean": 0.13,
+   "sd": 0.09,
+   "n": 6,
+   "min": 0.04,
+   "max": 0.28
+  }
+ }
+}

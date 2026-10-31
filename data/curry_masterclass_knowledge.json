@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "source": "库里官方大师课 P2《投篮：姿势、瞄准、方式》",
+    "bvid": "BV1Xw411Z7p6",
+    "cid": 353132179,
+    "part": 2,
+    "duration_s": 864,
+    "publisher": "内森の日常（中英字幕压制：Faye就是帆妹 / 内森の日常）",
+    "original": "Stephen Curry MasterClass - Shooting: Stance, Aim, Method",
+    "extracted_by": "抽样 48 帧硬字幕人工校对，时间点误差 ±2s",
+    "note": "本文件只记录库里本人在该集里的原话要点，用于『建议生成』的权威依据；不改写、不臆造。"
+  },
+  "chapters": [
+    {
+      "id": "feet",
+      "title": "从脚开始投篮",
+      "t_start": 144,
+      "t_end": 460,
+      "points": [
+        {
+          "t": 162,
+          "zh": "因为一切都要从脚下开始。",
+          "en": "because it all starts from the ground up.",
+          "tags": ["stance", "power_chain"],
+          "metrics": ["kneeFlex"],
+          "why": "发力链起点，脚不稳则上肢代偿"
+        },
+        {
+          "t": 180,
+          "zh": "你应该让你的 10 个脚趾全都对着篮筐。",
+          "en": "you should have your 10 toes facing squared up to the rim.",
+          "tags": ["stance", "alignment"],
+          "metrics": ["shoulderTilt", "hipTilt"],
+          "why": "10 趾同向 = 身体正对篮筐，决定了肩髋能否水平"
+        },
+        {
+          "t": 198,
+          "zh": "但它们都朝着同一个方向。",
+          "en": "But they're all pointing in the same direction.",
+          "tags": ["stance", "alignment"],
+          "metrics": ["shoulderTilt"],
+          "why": "两脚朝向一致，避免髋部扭转传导到肩"
+        },
+        {
+          "t": 216,
+          "zh": "把你的脚踩在地板上去感受。",
+          "en": "is something that you need to get out on the floor",
+          "tags": ["stance"],
+          "metrics": [],
+          "why": "本体感觉：脚掌贴地是稳定的前提"
+        },
+        {
+          "t": 270,
+          "zh": "蓄力到我们的臀部、下背部。",
+          "en": "Loading our hips, our backside, and getting",
+          "tags": ["power_chain", "load"],
+          "metrics": ["hipHeight", "kneeFlex"],
+          "why": "下蹲发力来自髋，不是膝盖前顶"
+        },
+        {
+          "t": 288,
+          "zh": "膝盖不要超过脚趾。",
+          "en": "And we don't want to have our knees in front of our toes.",
+          "tags": ["stance", "knee"],
+          "metrics": ["kneeFlex"],
+          "why": "膝超脚尖会失去后链发力，且重心前倾"
+        },
+        {
+          "t": 342,
+          "zh": "所以找到足弓是关键，稳定足弓。",
+          "en": "So finding that arch is key, planting it into the ground,",
+          "tags": ["stance"],
+          "metrics": [],
+          "why": "足弓塌陷会让整个发力链向内偏移"
+        },
+        {
+          "t": 414,
+          "zh": "如果你的膝盖向外，你就会用力过大（损失力量）。",
+          "en": "If you bend your knees outward, you'll sacrifice power.",
+          "tags": ["knee", "power_chain"],
+          "metrics": ["kneeFlex"],
+          "why": "膝外翻 = 力量泄漏，对应下蹲深度与膝角"
+        },
+        {
+          "t": 450,
+          "zh": "【10 个脚趾朝向同一方向】（画面提示卡）",
+          "en": "POINT ALL 10 TOES IN THE SAME DIRECTION",
+          "tags": ["stance", "alignment"],
+          "metrics": ["shoulderTilt"],
+          "why": "本章核心口令"
+        }
+      ]
+    },
+    {
+      "id": "hands",
+      "title": "手的姿势",
+      "t_start": 460,
+      "t_end": 575,
+      "points": [
+        {
+          "t": 486,
+          "zh": "让球正确地旋转。",
+          "en": "to get proper spin on the ball, and also",
+          "tags": ["hand", "spin"],
+          "metrics": ["wristSym", "followThrough"],
+          "why": "后旋来自手指拨球，不是手掌推球"
+        },
+        {
+          "t": 504,
+          "zh": "要有一点空间（掌心与球之间）。",
+          "en": "in between my palm and the ball with the ball sitting",
+          "tags": ["hand"],
+          "metrics": [],
+          "why": "掌心不贴球 → 手指控制方向，出手更稳"
+        },
+        {
+          "t": 522,
+          "zh": "（手指在）球的哪个位置。",
+          "en": "position is on the ball.",
+          "tags": ["hand"],
+          "metrics": [],
+          "why": "手指落点决定旋转轴"
+        },
+        {
+          "t": 540,
+          "zh": "找到篮球上的气孔。",
+          "en": "finding the air valve on the basketball,",
+          "tags": ["hand", "aim"],
+          "metrics": [],
+          "why": "气孔作为食指定位的触觉锚点"
+        },
+        {
+          "t": 558,
+          "zh": "把食指放在气孔上，用这个姿势盯着篮筐。",
+          "en": "just staring at the rim doing form shooting with your finger",
+          "tags": ["hand", "aim"],
+          "metrics": ["elbowAngle"],
+          "why": "食指对准篮筐 = 肘部自然内收"
+        }
+      ]
+    },
+    {
+      "id": "aim",
+      "title": "瞄准点",
+      "t_start": 575,
+      "t_end": 660,
+      "points": [
+        {
+          "t": 594,
+          "zh": "对我来说，我觉得最舒服的是——",
+          "en": "For me, what I feel is most comfortable-- when",
+          "tags": ["aim"],
+          "metrics": [],
+          "why": "瞄准点是个人化选择"
+        },
+        {
+          "t": 612,
+          "zh": "看着篮筐的前部。",
+          "en": "on those hooks, looking at the front of the rim",
+          "tags": ["aim"],
+          "metrics": ["releaseAngle"],
+          "why": "瞄前沿 → 需要更高弧线才能入框"
+        },
+        {
+          "t": 630,
+          "zh": "只要轻轻一触，有一点弧线。",
+          "en": "over the front of the rim with a little bit of touch,",
+          "tags": ["aim", "arc"],
+          "metrics": ["releaseAngle"],
+          "why": "弧线 = 出手角，弧线不足则入射角太平"
+        },
+        {
+          "t": 684,
+          "zh": "或者打断我瞄准篮筐的角度和视线。",
+          "en": "or to interrupt my angle or my eyesight to the basket.",
+          "tags": ["aim"],
+          "metrics": [],
+          "why": "出手瞬间视线不离开篮筐"
+        }
+      ]
+    },
+    {
+      "id": "release",
+      "title": "出手点",
+      "t_start": 660,
+      "t_end": 864,
+      "points": [
+        {
+          "t": 666,
+          "zh": "出手点是投篮中非常重要的一部分。",
+          "en": "Your release point is a very important part of your shot",
+          "tags": ["release"],
+          "metrics": ["releaseHeight", "releaseTime"],
+          "why": "出手点高度与时机决定被封盖概率"
+        },
+        {
+          "t": 720,
+          "zh": "这才能让你有恰当的弧度。",
+          "en": "That's going to give you proper arc",
+          "tags": ["release", "arc"],
+          "metrics": ["releaseAngle"],
+          "why": "出手点 + 手臂伸展共同决定弧线"
+        },
+        {
+          "t": 738,
+          "zh": "从臀部到出手位置要呈完美的线条。",
+          "en": "We want to have kind of a perfect line from my hip",
+          "tags": ["release", "alignment", "power_chain"],
+          "metrics": ["shoulderTilt", "hipTilt", "releaseAngle"],
+          "why": "髋-肩-肘-腕成一条竖线，最关键的姿势判据"
+        },
+        {
+          "t": 756,
+          "zh": "伸出去一点点。",
+          "en": "It's just a little bit out.",
+          "tags": ["release", "follow_through"],
+          "metrics": ["followThrough"],
+          "why": "跟随动作不用夸张，自然延伸即可"
+        },
+        {
+          "t": 774,
+          "zh": "如果你在篮筐前面做这个动作（跟随动作歪斜）。",
+          "en": "If you do this follow through right in front of the basket,",
+          "tags": ["release", "follow_through", "symmetry"],
+          "metrics": ["wristSym", "shoulderTilt"],
+          "why": "跟随动作不对称 → 左右偏差"
+        },
+        {
+          "t": 810,
+          "zh": "会让球有从左到右的侧旋。",
+          "en": "the left to right action in side spin.",
+          "tags": ["symmetry", "spin"],
+          "metrics": ["wristSym", "shoulderTilt"],
+          "why": "侧旋 = 左右手不对称发力，球会左右飘"
+        },
+        {
+          "t": 828,
+          "zh": "如果大于这个弧度（出手角过高）。",
+          "en": "Anything higher than that, you start",
+          "tags": ["release", "arc", "error"],
+          "metrics": ["releaseAngle"],
+          "why": "出手角过高 → 力量不足/短"
+        },
+        {
+          "t": 846,
+          "zh": "因为它会导致球左右不平衡的运动轨迹。",
+          "en": "as it'll cause left to right or right to left movement of the ball.",
+          "tags": ["symmetry", "spin"],
+          "metrics": ["wristSym", "shoulderTilt"],
+          "why": "左右不对称的最终后果：轨迹左右漂移"
+        }
+      ]
+    }
+  ],
+  "metric_map": {
+    "_说明": "库里原话 → 本系统指标维度的对应关系，用于把『建议』挂到『数据』上",
+    "releaseAngle": ["出手角/弧线", "612s, 630s, 720s, 828s"],
+    "elbowAngle": ["肘部内收与伸展", "558s"],
+    "releaseHeight": ["出手点高度", "666s"],
+    "releaseTime": ["出手时机", "666s"],
+    "followThrough": ["跟随动作延伸", "486s, 756s"],
+    "shoulderTilt": ["肩线水平/身体正对篮筐", "180s, 198s, 738s, 774s"],
+    "hipTilt": ["髋线水平", "180s, 738s"],
+    "kneeFlex": ["下蹲深度/膝不超脚尖", "288s, 414s"],
+    "wristSym": ["双手对称/避免侧旋", "810s, 846s"]
+  }
+}

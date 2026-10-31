@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShootLab · 投篮动作分析与球星对比</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M3 12h18M12 3v18M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"></path>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>ShootLab 投篮动作分析</h1>
+      <p>交互原型 v0.5 · 指标按身高归一化，出手角按出手点个性化 · 建议可追溯到库里大师课原话</p>
+    </div>
+  </div>
+
+  <div class="compare">
+    <span class="compare-label">对比球星</span>
+    <div class="chips" id="starChips"></div>
+  </div>
+
+  <div class="topbar-right">
+    <div class="stat-pill">已记录 <b id="shotCount">0</b> 次出手</div>
+    <label class="btn btn-primary" for="fileInput">分析我的视频</label>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ================= 左列 ================= -->
+  <section class="col col-left">
+
+    <div class="card video-card">
+      <div class="card-head">
+        <h2>视频分析</h2>
+        <div class="head-tools">
+          <span class="badge" id="modeBadge">等待视频</span>
+          <label class="height-field" title="填了身高才能把像素换算成厘米">
+            身高
+            <input id="heightInput" type="number" min="140" max="225" step="1" value="178" />
+            <span>cm</span>
+          </label>
+          <button class="btn btn-ghost" id="btnGhost" title="把标准姿势骨架叠在你的视频上对比">标准模板</button>
+          <button class="btn btn-exp" id="btnExperiment">看示例</button>
+          <label class="btn btn-primary" for="fileInput">选择视频</label>
+          <input type="file" id="fileInput" accept="video/*" hidden />
+        </div>
+      </div>
+
+      <div class="stage" id="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+
+        <!-- 空态：没有视频时这里是唯一的主视觉，不做任何假动画 -->
+        <div class="drop" id="drop">
+          <div class="drop-art">
+            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
+              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
+              <circle cx="60" cy="27" r="6" stroke="currentColor" stroke-width="2"/>
+              <path d="M60 33v17M60 50l-9 14M60 50l9 14M60 38l-11 7M60 38l11 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M60 12v9M56.5 15.5 60 12l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+            </svg>
+          </div>
+          <h3>拖一个投篮视频进来</h3>
+          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
+          <div class="drop-steps">
+            <span><b>1</b>选择视频</span>
+            <i></i>
+            <span><b>2</b>逐帧识别人体</span>
+            <i></i>
+            <span><b>3</b>出手指标与建议</span>
+          </div>
+          <label class="btn btn-primary btn-lg" for="fileInput">选一个视频试试</label>
+          <p class="drop-tip">机位垂直于投篮方向（侧面或正面）时指标最准；全身入镜、光线充足</p>
+        </div>
+
+        <!-- 分析中：进度必须可见，否则几十秒像卡死 -->
+        <div class="analysing" id="analysing" hidden>
+          <div class="an-box">
+            <div class="an-head"><b id="anTitle">正在分析</b><span id="anPct">0%</span></div>
+            <div class="an-track"><i id="anBar"></i></div>
+            <p class="an-text" id="anText">正在加载姿态模型…</p>
+          </div>
+        </div>
+
+        <span class="ghost-note" id="ghostNote" hidden></span>
+        <span class="stage-chip" id="stageChip" hidden></span>
+        <span class="frame-badge" id="frameBadge" hidden></span>
+      </div>
+
+      <div class="track" id="track" hidden>
+        <div class="track-bar"></div>
+        <div class="track-fill" id="trackFill"></div>
+        <div class="track-marks" id="trackMarks"></div>
+        <div class="track-head" id="trackHead"></div>
+      </div>
+
+      <!-- 此刻：拖到哪一秒，这里就显示那一帧的实测值，
+           和右边指标卡是同一份数据，不是两套 -->
+      <div class="live" id="liveBar" hidden>
+        <span class="live-t" id="liveT">0.00s</span>
+        <span class="live-shot" id="liveShot">—</span>
+        <span class="live-vals" id="liveVals"></span>
+      </div>
+
+      <div class="controls" id="controls" hidden>
+        <button class="btn btn-icon" id="btnPrev" title="上一帧（←）">&#10216;</button>
+        <button class="btn btn-play" id="btnPlay" title="播放 / 暂停（空格）">&#9654;</button>
+        <button class="btn btn-icon" id="btnNext" title="下一帧（→）">&#10217;</button>
+        <span class="divider"></span>
+        <div class="speeds" id="speeds"></div>
+        <span class="spacer"></span>
+        <span class="time" id="timeLabel">0.00s</span>
+      </div>
+      <p class="shortcut" id="shortcut" hidden>空格 播放/暂停 · ←→ 逐帧 · 点击时间轴跳转</p>
+
+      <!-- 数据来源条：必须写清楚这批数字从哪来的 -->
+      <div class="exp-bar" id="expBar" hidden>
+        <span class="exp-dot"></span>
+        <span class="exp-text" id="expText"></span>
+        <button class="exp-exit" id="expExit">重新选择</button>
+      </div>
+
+      <!-- 讲解入口：分析完直接能听一遍「这球好在哪、该改哪」 -->
+      <div class="coach-cta" id="coachCta" hidden>
+        <span class="cta-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h8A1.5 1.5 0 0 1 15 5.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 4 14.5z"></path>
+            <path d="M18 8v8.5a2.5 2.5 0 0 1-2.5 2.5H8"></path>
+            <path d="m9.6 7.2 3.1 2.7-3.1 2.7"></path>
+          </svg>
+        </span>
+        <span class="cta-tx">
+          <b>逐段讲解这次出手</b>
+          <span>在你自己的视频上画角度、标参考线，边放边说哪里该改</span>
+        </span>
+        <button id="btnCoach">开始讲解</button>
+      </div>
+    </div>
+
+    <div class="card table-card">
+      <div class="card-head">
+        <h2>出手记录</h2>
+        <span class="sub" id="tableSub"></span>
+      </div>
+      <!-- 选中某次出手后出现的工具条：自动判定总会错几次，得让人自己改 -->
+      <div class="shot-tools" id="shotTools" hidden>
+        <span class="st-idx">第 <b id="stIdx">1</b> 次</span>
+        <button class="btn btn-sm" id="stSet" title="把出手时刻改成视频当前播放的位置，全部指标重算">用当前帧当出手点</button>
+        <button class="btn btn-sm" id="stMade">标记命中</button>
+        <button class="btn btn-sm" id="stMiss">标记未中</button>
+        <button class="btn btn-sm danger" id="stDel">删除（误判）</button>
+        <span class="st-hint" id="stHint"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="shot-table">
+          <thead>
+            <tr>
+              <th class="c-idx">#</th>
+              <th>出手角</th>
+              <th class="hide-sm">肘角</th>
+              <th class="hide-sm">出手点</th>
+              <th class="c-score">评分</th>
+              <th>结果</th>
+            </tr>
+          </thead>
+          <tbody id="shotRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 真实样本库：说明「这些数字多大算正常」不是拍脑袋定的 -->
+    <div class="card ds-card">
+      <div class="card-head">
+        <h2>真实样本库</h2>
+        <span class="sub" id="dsSub"></span>
+      </div>
+      <div class="ds-body" id="dsBody"></div>
+    </div>
+
+  </section>
+
+  <!-- ================= 右列 ================= -->
+  <section class="col col-right">
+
+    <div class="metrics" id="metrics"></div>
+
+    <!-- 进球概率：物理算「这个出手角能不能进」，再按姿势修正 -->
+    <div class="card prob-card" id="probCard" hidden></div>
+
+    <div class="chart-grid">
+      <div class="card chart-card">
+        <div class="card-head">
+          <h2>动作维度对比</h2>
+          <span class="sub">我 vs <b id="starNameLabel">库里</b></span>
+        </div>
+        <div class="chart" id="radarChart"></div>
+      </div>
+      <div class="card chart-card">
+        <div class="card-head">
+          <h2>出手趋势</h2>
+          <span class="sub">综合评分 / 出手角度</span>
+        </div>
+        <div class="chart" id="trendChart"></div>
+      </div>
+    </div>
+
+    <!-- 点位与打板：什么位置该用什么方式投 -->
+    <div class="card zone-card" id="zoneCard"></div>
+
+    <div class="card suggest-card" id="suggestCard"></div>
+
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden></div>
+
+<!-- 库里原话回看层：点击任意引用块，直接跳到讲解那一秒 -->
+<div class="quote-layer" id="quoteLayer" hidden>
+  <div class="ql-panel">
+    <div class="ql-head">
+      <div>
+        <h3 id="qlTitle">库里原话</h3>
+        <p class="sub" id="qlSub"></p>
+      </div>
+      <button class="modal-close" id="qlClose" aria-label="关闭">×</button>
+    </div>
+    <div class="ql-video-wrap">
+      <!-- src 直接写在这里：写进属性后页面解析时就开始取元数据，
+           点开会话时才能立刻 seek。懒加载在本地大文件上反而更容易卡住 -->
+      <video id="quoteVideo" src="media/curry_p2.mp4" preload="metadata" playsinline controls></video>
+    </div>
+    <div class="ql-video-wrap-tip" id="qlTip" hidden>
+      本地视频没能加载。可能是文件被移动，或浏览器不支持该编码。<br>
+      点下面的链接可以直接在 B 站看这一段。
+    </div>
+    <div class="ql-foot">
+      <p class="ql-quote" id="qlQuote"></p>
+      <p class="ql-credit">
+        <span id="qlCredit"></span>
+        <a id="qlBili" href="#" target="_blank" rel="noopener">本地视频打不开？去 B 站看这一段 ↗</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 教练讲解层：把你的视频定格在 6 个关键瞬间，逐段圈画 + 旁白 -->
+<div class="coach-layer" id="coachLayer" hidden>
+  <div class="coach-head">
+    <div class="coach-title">
+      <h3>教练讲解</h3>
+      <p id="coachMeta"></p>
+    </div>
+    <div class="coach-steps" id="coachSteps"></div>
+    <button class="coach-close" id="coachClose" aria-label="关闭">×</button>
+  </div>
+
+  <div class="coach-body">
+    <div class="coach-stage" id="coachStage">
+      <video id="coachVideo" playsinline muted preload="auto"></video>
+      <canvas id="coachCanvas"></canvas>
+      <div class="coach-sub" id="coachSub"></div>
+    </div>
+    <aside class="coach-side">
+      <h4>讲解顺序</h4>
+      <div id="coachList"></div>
+    </aside>
+  </div>
+
+  <div class="coach-foot">
+    <button class="cbtn" id="coachReplay" disabled>重新讲一遍</button>
+    <button class="cbtn" id="coachVoice"><span class="dot"></span><span>语音开</span></button>
+    <button class="cbtn" id="coachBgm"><span class="dot"></span><span>音乐开</span></button>
+    <button class="cbtn" id="coachScope" hidden>讲全部</button>
+    <button class="cbtn" id="coachFree">自由播放</button>
+    <span class="spacer"></span>
+    <button class="cbtn" id="coachExport">导出讲解视频</button>
+    <button class="cbtn primary" id="coachNext">下一段 →</button>
+  </div>
+</div>
+
+<script src="vendor/echarts.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/knowledge.js"></script>
+<script src="js/experiment.js"></script>
+<script src="js/dataset.js"></script>
+<script src="js/pose_exp.js"></script>
+<script src="js/metrics.js"></script>
+<script src="js/video-player.js"></script>
+<script src="js/overlay.js"></script>
+<script src="js/ghost.js"></script>
+<script src="js/zone.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/bgm.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/suggestion.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/app.js"></script>
+
+<!-- 分析引擎是 ES 模块（里面 import MediaPipe 的 wasm 运行时）。
+     模块脚本天然 defer，跑在 app.js 之后；app.js 只在用户选视频时才碰它，
+     所以顺序不影响。必须走 http(s) 打开，file:// 下浏览器不允许加载模块。 -->
+<script type="module">
+  import { analyze, isReady, recomputeShot } from './js/pose-engine.js';
+  window.BB = window.BB || {};
+  window.BB.PoseEngine = { analyze, isReady, recomputeShot };
+  document.documentElement.classList.add('engine-ready');
+</script>
+</body>
+</html>

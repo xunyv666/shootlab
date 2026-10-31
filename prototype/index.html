@@ -316,13 +316,20 @@
   document.documentElement.classList.add('engine-ready');
 </script>
 <script>
-  /* 「← 作品集」只在被个人网站以子路径引用时才有意义。
-     同一份代码也发布在 GitHub Pages 上作为独立站点，那里的 ../ 会掉到
-     xunyv666.github.io 根目录（空站点），所以 github.io 下直接藏掉。 */
-  if (/\.github\.io$/i.test(location.hostname)) {
-    var _bl = document.getElementById('backLink');
-    if (_bl) _bl.hidden = true;
-  }
+  /* 「← 作品集」的落点随部署位置变 —— 同一份代码现在同时活在三个地方：
+       1. 个人网站子路径  /shootlab/       → ../ 就是作品集，不动
+       2. 独立站          shootlab.pages.dev → ../ 会掉回自己，指向主站
+       3. GitHub Pages    空站点根目录      → 没有作品集可回，藏掉 */
+  (function () {
+    var a = document.getElementById('backLink');
+    if (!a) return;
+    var host = location.hostname;
+    if (/\.github\.io$/i.test(host)) { a.hidden = true; return; }
+    if (/^shootlab\./i.test(host)) {
+      a.href = 'https://ai-6f8.pages.dev/';
+      a.title = '回到作品集（个人网站）';
+    }
+  })();
 </script>
 </body>
 </html>

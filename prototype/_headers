@@ -1,0 +1,31 @@
+# Cloudflare Pages 头部配置（只有 Cloudflare 会读这个文件，GitHub Pages 会忽略）
+# 目的：页面本体不缓存，避免改了前端还看到旧版本；
+#       wasm / 姿态模型 / 示例视频体积大且极少变动，长缓存。
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/vendor/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/models/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/media/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  Accept-Ranges: bytes
+
+# MediaPipe 的 wasm 必须以 application/wasm 返回，否则流式编译失败
+/vendor/mediapipe/vision_wasm_internal.wasm
+  Content-Type: application/wasm
+
+/vendor/mediapipe/vision_wasm_nosimd_internal.wasm
+  Content-Type: application/wasm
+
+# 姿态模型是二进制权重，别让浏览器当文本猜类型
+/models/pose_landmarker_full.task
+  Content-Type: application/octet-stream

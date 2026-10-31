@@ -28,7 +28,7 @@
   </div>
 
   <div class="topbar-right">
-    <a class="back-link" href="../" title="回到作品集">← 作品集</a>
+    <a class="back-link" id="backLink" href="../" title="回到作品集">← 作品集</a>
     <div class="stat-pill">已记录 <b id="shotCount">0</b> 次出手</div>
     <label class="btn btn-primary" for="fileInput">分析我的视频</label>
   </div>
@@ -314,6 +314,15 @@
   window.BB = window.BB || {};
   window.BB.PoseEngine = { analyze, isReady, recomputeShot };
   document.documentElement.classList.add('engine-ready');
+</script>
+<script>
+  /* 「← 作品集」只在被个人网站以子路径引用时才有意义。
+     同一份代码也发布在 GitHub Pages 上作为独立站点，那里的 ../ 会掉到
+     xunyv666.github.io 根目录（空站点），所以 github.io 下直接藏掉。 */
+  if (/\.github\.io$/i.test(location.hostname)) {
+    var _bl = document.getElementById('backLink');
+    if (_bl) _bl.hidden = true;
+  }
 </script>
 </body>
 </html>

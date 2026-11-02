@@ -921,6 +921,41 @@ td.c-score b { font-size: 13px; }
 }
 .engine-hint b { font-weight: 600; }
 .engine-hint.is-done { color: rgba(74, 222, 128, .8); }
+
+/* 双击打开 html（file://）：引擎注定起不来，这条提示要说清「该怎么开」，
+   而不是丢一句「分析引擎没加载」。视觉上当告示牌用，不当报错用。 */
+.engine-hint.is-file {
+  max-width: 470px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(249, 115, 22, .3);
+  background: rgba(249, 115, 22, .1);
+  color: rgba(255, 255, 255, .78);
+  font-size: 11.5px;
+  line-height: 1.7;
+  text-align: left;
+}
+.engine-hint.is-file b { color: #fdba74; }
+.engine-hint.is-file a {
+  color: #fdba74;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.engine-hint.is-file code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .1);
+  color: rgba(255, 255, 255, .85);
+}
+.drop.is-file-mode .drop-steps,
+.drop.is-file-mode .drop-sub,
+.drop.is-file-mode .drop-art,
+.drop.is-file-mode .drop-tip { display: none; }
+.drop.is-file-mode h3 { margin-bottom: 2px; }
 .stage.has-video .drop { display: none; }
 .stage.dragging { outline: 2px dashed #fb923c; outline-offset: -6px; }
 .stage.dragging .drop { background: rgba(249, 115, 22, .06); }

@@ -586,6 +586,8 @@ window.BB = window.BB || {};
     $('stage').classList.add('has-video');
     $('drop').hidden = true;
     $('analysing').hidden = true;
+    /* 分析出来了，「正在下载引擎」就不能再挂着 —— 否则停在 85% 像卡死 */
+    if ($('engineHint')) $('engineHint').hidden = true;
     $('stageChip').hidden = false;
     $('frameBadge').hidden = false;
     $('track').hidden = false;
@@ -764,8 +766,37 @@ window.BB = window.BB || {};
      跟服务器无关，这里根本没有服务器。 */
   function initEngine() {
     var E = BB.PoseEngine;
-    if (!E || !E.onEngineProgress) return;
     var hint = $('engineHint');
+
+    /* 双击打开 html（file://）时浏览器禁掉 ES 模块和 wasm，引擎必然起不来。
+       这里先把话说明白 —— 否则用户只会看到「分析不了」，以为网站坏了。 */
+    if (location.protocol === 'file:') {
+      if (hint) {
+        hint.hidden = false;
+        hint.classList.add('is-file');
+        hint.innerHTML = '双击打开的 html 加载不了分析引擎（浏览器不允许），'
+          + '这不是网站坏了。换成线上地址就能用。';
+      }
+      /* 这个状态下页面本来就跑不了，空态里那些「拖视频进来」的话全是误导，
+         直接换成一句结论 + 一个能点的入口 */
+      var drop = $('drop');
+      if (drop) {
+        drop.classList.add('is-file-mode');
+        var h3 = drop.querySelector('h3');
+        if (h3) h3.textContent = '这个文件要先在线上打开';
+        var lab = drop.querySelector('label[for="fileInput"]');
+        if (lab) {
+          var go = document.createElement('a');
+          go.className = 'btn btn-primary btn-lg';
+          go.href = 'https://shootlab.pages.dev';
+          go.textContent = '打开 shootlab.pages.dev';
+          lab.parentNode.replaceChild(go, lab);
+        }
+      }
+      return;
+    }
+
+    if (!E || !E.onEngineProgress) return;
 
     E.onEngineProgress(function (s) {
       /* 模型占前一半、运行时占后一半，合起来算总进度 */
@@ -826,7 +857,10 @@ window.BB = window.BB || {};
     syncVideoAspect();
 
     if (!E) {
-      showAnalyseError('分析引擎没有加载起来（js/pose-engine.js 是 ES 模块，需要用本地服务器打开页面，不能直接双击 html）。');
+      showAnalyseError(location.protocol === 'file:'
+        ? '分析引擎没加载起来：你是双击打开的 html，浏览器不允许这种打开方式加载模块。'
+          + '用 <a href="https://shootlab.pages.dev" target="_blank" rel="noopener">线上版</a> 就行。'
+        : '分析引擎没有加载起来（js/pose-engine.js 没取到），刷新一次页面再试。');
       return;
     }
 

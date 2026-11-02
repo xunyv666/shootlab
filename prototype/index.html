@@ -81,6 +81,7 @@
           </div>
           <label class="btn btn-primary btn-lg" for="fileInput">选一个视频试试</label>
           <p class="drop-tip">机位垂直于投篮方向（侧面或正面）时指标最准；全身入镜、光线充足</p>
+          <p class="engine-hint" id="engineHint" hidden></p>
         </div>
 
         <!-- 分析中：进度必须可见，否则几十秒像卡死 -->
@@ -310,9 +311,9 @@
      模块脚本天然 defer，跑在 app.js 之后；app.js 只在用户选视频时才碰它，
      所以顺序不影响。必须走 http(s) 打开，file:// 下浏览器不允许加载模块。 -->
 <script type="module">
-  import { analyze, isReady, recomputeShot } from './js/pose-engine.js';
+  import { analyze, isReady, recomputeShot, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
   window.BB = window.BB || {};
-  window.BB.PoseEngine = { analyze, isReady, recomputeShot };
+  window.BB.PoseEngine = { analyze, isReady, recomputeShot, preload, onEngineProgress, engineIsReady };
   document.documentElement.classList.add('engine-ready');
 </script>
 <script>

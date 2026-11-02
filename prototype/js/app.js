@@ -725,11 +725,19 @@ window.BB = window.BB || {};
     return (v >= 130 && v <= 230) ? v : 178;
   }
 
+  /* 进度条只许往前走。
+     引擎预热和逐帧识别是两段独立的上报，范围各自不同，
+     直接覆盖会出现「到 50% 又跳回 5%」这种一眼假的动作。 */
+  var anRatio = 0;
+  function resetAnalyseBar() { anRatio = 0; }
+
   function showAnalyse(ratio, title, text) {
     $('analysing').hidden = false;
     $('anTitle').textContent = title || '正在分析';
-    $('anBar').style.width = Math.round(Math.max(0, Math.min(1, ratio)) * 100) + '%';
-    $('anPct').textContent = Math.round(Math.max(0, Math.min(1, ratio)) * 100) + '%';
+    var r = Math.max(0, Math.min(1, ratio));
+    if (r > anRatio) anRatio = r;
+    $('anBar').style.width = Math.round(anRatio * 100) + '%';
+    $('anPct').textContent = Math.round(anRatio * 100) + '%';
     if (text) $('anText').textContent = text;
   }
 
@@ -740,6 +748,46 @@ window.BB = window.BB || {};
     $('anBar').classList.add('is-error');
     $('anPct').textContent = '';
     $('anText').innerHTML = msg + '<br><span class="an-hint">换一段全身入镜、光线充足的视频再试一次</span>';
+  }
+
+  /* 引擎预热提示 + 把真实下载进度接到进度条上。
+     为什么必须有：首次要下近 19MB，没有进度就是一片死寂，
+     用户会以为页面坏了直接关掉 —— 这是「别人用不了」的真正原因，
+     跟服务器无关，这里根本没有服务器。 */
+  function initEngine() {
+    var E = BB.PoseEngine;
+    if (!E || !E.onEngineProgress) return;
+    var hint = $('engineHint');
+
+    E.onEngineProgress(function (s) {
+      /* 模型占前一半、运行时占后一半，合起来算总进度 */
+      var overall = s.phase === 'model'
+        ? 0.5 * s.pct
+        : 0.5 + 0.5 * s.pct;
+
+      /* 正在分析：进度条跟着下载走，不要死钉在 1% */
+      if (!$('analysing').hidden && s.phase !== 'ready' && s.phase !== 'error') {
+        showAnalyse(0.02 + 0.46 * overall, '正在准备识别引擎', s.text);
+        return;
+      }
+
+      if (!hint) return;
+      if (s.phase === 'ready' || s.phase === 'idle') {
+        hint.hidden = true;
+        return;
+      }
+      if (s.phase === 'error') {
+        hint.hidden = false;
+        hint.textContent = '识别引擎没加载成功，选中视频时会自动重试';
+        return;
+      }
+      hint.hidden = false;
+      hint.innerHTML = s.text + ' · <b>' + Math.round(overall * 100) + '%</b>'
+        + '<br>首次使用需下载约 19MB 识别引擎，之后缓存在本机，打开即用';
+    });
+
+    /* 页面一打开就预热：把等待藏进用户阅读页面的时间里 */
+    if (E.preload) E.preload();
   }
 
   function startAnalyze(file) {
@@ -763,6 +811,7 @@ window.BB = window.BB || {};
     if ($('coachCta')) $('coachCta').hidden = true;
     if ($('liveBar')) $('liveBar').hidden = true;
     if ($('shotTools')) $('shotTools').hidden = true;
+    resetAnalyseBar();
     showAnalyse(0.01, '正在读取视频…', '正在加载姿态模型…');
 
     BB.VideoPlayer.loadUrl(url);
@@ -966,6 +1015,7 @@ window.BB = window.BB || {};
   function boot() {
     renderStars();
     initVideo();
+    initEngine();
     initQuoteLayer();
     renderDataset();
     if (BB.Zone) {

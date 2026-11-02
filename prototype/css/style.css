@@ -563,6 +563,31 @@ td.c-score b { font-size: 13px; }
   .topbar { flex-wrap: wrap; gap: 10px; }
   .compare { order: 3; width: 100%; }
 }
+
+/* 手机端：顶栏原本是 flex:none，宽度按最长那行文案撑开（实测 528px），
+   在 390px 屏上把整个页面顶出右边、截图时被硬切。
+   让品牌区可以被压缩，副标题在窄屏直接不显示，标题超长就省略。 */
+@media (max-width: 720px) {
+  .topbar { padding: 10px 14px; gap: 8px; }
+  .brand { flex: 1 1 auto; min-width: 0; }
+  .brand-text { min-width: 0; }
+  .brand-text h1 {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-text p { display: none; }
+  .logo { width: 32px; height: 32px; flex: none; }
+  .topbar-right { flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
+  /* 球星横向列表在窄屏只留可滚动的胶囊，去掉「对比球星」这四个字。
+     注意 flex 要写全：基础规则里的 flex:1 是 basis 0，会把 width:100% 顶掉，
+     结果整排被压缩成 20px 的一条。 */
+  .compare { flex: 1 0 100%; order: 3; min-width: 0; }
+  .compare-label { display: none; }
+  .chips { min-width: 0; }
+}
+
 @media (max-width: 780px) {
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .suggest-body { grid-template-columns: 1fr; }
@@ -872,6 +897,18 @@ td.c-score b { font-size: 13px; }
   max-width: 400px;
   line-height: 1.6;
 }
+
+/* 引擎预热提示：首次近 19MB 下载必须让人看见，否则和卡死没区别 */
+.engine-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(251, 146, 60, .92);
+  max-width: 420px;
+  font-variant-numeric: tabular-nums;
+}
+.engine-hint b { font-weight: 600; }
+.engine-hint.is-done { color: rgba(74, 222, 128, .8); }
 .stage.has-video .drop { display: none; }
 .stage.dragging { outline: 2px dashed #fb923c; outline-offset: -6px; }
 .stage.dragging .drop { background: rgba(249, 115, 22, .06); }

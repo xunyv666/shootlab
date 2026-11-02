@@ -18,6 +18,13 @@ import { FilesetResolver, PoseLandmarker } from '../vendor/mediapipe/vision_bund
 const WASM_DIR = 'vendor/mediapipe';
 const MODEL_URL = 'models/pose_landmarker_full.task';
 
+/* 模型未压缩时的确切字节数。
+   为什么写死：Cloudflare 用分块传输，响应头里没有 content-length，
+   拿不到总量就算不出百分比 —— 而"卡在 1% 不动"正是用户以为页面坏掉的原因。
+   wasm 约 9.4MB、模型 9.4MB，首次合计近 19MB，这个数必须让用户看见。 */
+const MODEL_BYTES = 9398198;
+const ENGINE_TOTAL_MB = 19;
+
 /* 33 点索引（MediaPipe Pose） */
 const L_SH = 11, R_SH = 12, L_EL = 13, R_EL = 14, L_WR = 15, R_WR = 16;
 const L_HIP = 23, R_HIP = 24, L_KN = 25, R_KN = 26, L_AN = 27, R_AN = 28;
@@ -33,6 +40,80 @@ const MAX_SAMPLES = 600;
 const LONG_VIDEO = 20;
 
 let detectorPromise = null;
+let detector = null;
+
+/* ---------------- 引擎预热与真实下载进度 ---------------- */
+
+/* 订阅者：页面上的提示条和分析进度条都靠它拿进度 */
+const engineListeners = new Set();
+let engineStage = { phase: 'idle', pct: 0, text: '' };
+
+function emitEngine(phase, pct, text) {
+  engineStage = { phase, pct: Math.max(0, Math.min(1, pct)), text };
+  engineListeners.forEach(function (fn) {
+    try { fn(engineStage); } catch (e) { /* 订阅者报错不能影响下载 */ }
+  });
+}
+
+export function onEngineProgress(fn) {
+  engineListeners.add(fn);
+  fn(engineStage);
+  return function () { engineListeners.delete(fn); };
+}
+
+/* 已就绪就不用再显示「正在下载」了 */
+export function engineIsReady() {
+  return !!detector;
+}
+
+function mb(n) {
+  return (n / 1048576).toFixed(1);
+}
+
+/* 自己把模型下下来，才能边下边报百分比。
+   下完转成 blob URL 交给 MediaPipe —— 好处是只下一份，
+   不会出现「我们下一遍、它又下一遍」的双倍流量。
+   万一 blob 方案在某个浏览器上不可用，loadDetector 会退回直接用原始 URL。 */
+let modelBlobUrl = null;
+let modelPromise = null;
+
+function fetchModel() {
+  if (modelPromise) return modelPromise;
+  modelPromise = (async () => {
+    const res = await fetch(MODEL_URL, { cache: 'force-cache' });
+    if (!res.ok) throw new Error('姿态模型下载失败 HTTP ' + res.status);
+
+    /* 分块传输时没有 content-length，用已知的解压后大小做分母 */
+    const total = MODEL_BYTES;
+
+    if (!res.body || typeof res.body.getReader !== 'function') {
+      const buf = await res.arrayBuffer();
+      emitEngine('model', 1, '姿态模型已就绪');
+      modelBlobUrl = URL.createObjectURL(new Blob([buf], { type: 'application/octet-stream' }));
+      return modelBlobUrl;
+    }
+
+    const reader = res.body.getReader();
+    const chunks = [];
+    let got = 0;
+    for (;;) {
+      const r = await reader.read();
+      if (r.done) break;
+      chunks.push(r.value);
+      got += r.value.length;
+      emitEngine('model', Math.min(0.99, got / total),
+        '正在下载姿态模型 ' + mb(got) + ' / ' + mb(total) + ' MB');
+    }
+    modelBlobUrl = URL.createObjectURL(new Blob(chunks, { type: 'application/octet-stream' }));
+    emitEngine('model', 1, '姿态模型已就绪');
+    return modelBlobUrl;
+  })().catch(function (e) {
+    /* 下载失败就别硬扛了，退回让 MediaPipe 自己去拿 */
+    modelPromise = null;
+    throw e;
+  });
+  return modelPromise;
+}
 
 /* MediaPipe 的 VIDEO 模式要求时间戳【严格单调递增】，跨调用也不能倒退。
    每次 analyze 都从 0 开始的话，第二次上传视频就会抛
@@ -42,11 +123,25 @@ let detectorPromise = null;
 let tsCursor = 0;
 
 function loadDetector() {
+  if (detector) return Promise.resolve(detector);
   if (detectorPromise) return detectorPromise;
   detectorPromise = (async () => {
+    emitEngine('model', 0, '正在准备识别引擎…');
+
+    /* 模型：优先用自己下载的 blob，失败就退回原始地址 */
+    let modelPath = MODEL_URL;
+    try {
+      modelPath = await fetchModel();
+    } catch (e) {
+      emitEngine('model', 1, '正在初始化识别引擎…');
+    }
+
+    /* wasm 运行时约 9.4MB，这一步由 MediaPipe 自己下载，进度只能给到阶段提示 */
+    emitEngine('wasm', 0, '正在加载推理运行时（约 9 MB）…');
     const fileset = await FilesetResolver.forVisionTasks(WASM_DIR);
+
     const opts = delegate => ({
-      baseOptions: { modelAssetPath: MODEL_URL, delegate },
+      baseOptions: { modelAssetPath: modelPath, delegate },
       runningMode: 'VIDEO',
       numPoses: 1,
       minPoseDetectionConfidence: 0.5,
@@ -54,14 +149,30 @@ function loadDetector() {
       minTrackingConfidence: 0.5,
       outputSegmentationMasks: false
     });
+
+    emitEngine('wasm', 0.7, '正在启动推理引擎…');
     try {
-      return await PoseLandmarker.createFromOptions(fileset, opts('GPU'));
+      detector = await PoseLandmarker.createFromOptions(fileset, opts('GPU'));
     } catch (e) {
       // 老显卡/无 WebGL2 时退到 CPU，慢一点但能跑
-      return await PoseLandmarker.createFromOptions(fileset, opts('CPU'));
+      detector = await PoseLandmarker.createFromOptions(fileset, opts('CPU'));
     }
-  })();
+    emitEngine('ready', 1, '识别引擎已就绪');
+    return detector;
+  })().catch(function (e) {
+    /* 失败后允许重试，否则一次网络抖动就得刷新页面 */
+    detectorPromise = null;
+    emitEngine('error', 0, '识别引擎加载失败：' + (e && e.message ? e.message : e));
+    throw e;
+  });
   return detectorPromise;
+}
+
+/* 页面打开就悄悄预热，用户挑视频的时候引擎已经在下载了。
+   这也是「所有人都能用」的关键：等待被藏进阅读页面的时间里，而不是
+   落在点完上传之后那段看起来像卡死的空白里。 */
+export function preload() {
+  return loadDetector().then(function () { return true; }).catch(function () { return false; });
 }
 
 /* ---------------- 几何 ---------------- */

@@ -119,12 +119,17 @@ window.BB = window.BB || {};
   function renderProb() {
     var card = $('probCard');
     if (!card) return;
-    if (!state.shots.length || !BB.Zone) { card.hidden = true; return; }
+    if (!state.shots.length || !BB.Zone) {
+      card.hidden = true;
+      if ($('arcCard')) $('arcCard').hidden = true;
+      return;
+    }
     card.hidden = false;
 
     var idx = state.cursor != null ? state.cursor : (state.activeShot != null ? state.activeShot : 0);
     var sh = state.shots[idx] || state.shots[0];
     var pr = BB.Zone.predict(sh.raw, { dist: state.dist });
+    if (BB.Arc3D) BB.Arc3D.update(sh, state.dist, idx);
     var p = BB.Progress ? BB.Progress.apply(pr.p) : pr.p;
     var pct = Math.round(p * 100);
     var col = pct >= 58 ? '#16a34a' : pct >= 34 ? '#f97316' : '#dc2626';
@@ -1024,6 +1029,7 @@ window.BB = window.BB || {};
     if (BB.Zone) {
       BB.Zone.renderCard($('zoneCard'), state.shots.length ? 2.2 : 2.2);
     }
+    if (BB.Arc3D) BB.Arc3D.mount($('arcCard'));
     var ok = BB.Charts.init();
     BB.Overlay.setIdle(true);
     if (BB.Ghost) {

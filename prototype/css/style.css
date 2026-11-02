@@ -1630,3 +1630,51 @@ td.c-score b { font-size: 13px; }
 @media (max-width: 340px) {
   .drop-art { display: none; }
 }
+
+/* ---------- 3D 出手轨迹 ---------- */
+.arc-tag {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--orange-soft);
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+.arc-canvas-wrap {
+  height: 244px;
+  max-width: 660px;
+  margin: 2px auto 0;
+  padding: 0 6px;
+}
+.arc-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+.arc-canvas:active { cursor: grabbing; }
+.arc-facts {
+  display: flex;
+  gap: 26px;
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 6px 16px 0;
+  flex-wrap: wrap;
+}
+.arc-facts > div { display: flex; flex-direction: column; gap: 1px; }
+.arc-facts span { font-size: 10.5px; color: var(--text-3); }
+.arc-facts b { font-size: 13px; font-weight: 650; color: var(--text); }
+.arc-note b { color: #c2410c; font-weight: 600; }
+.arc-note {
+  max-width: 660px;
+  margin: 8px auto 14px;
+  padding: 0 16px;
+  font-size: 10.5px;
+  line-height: 1.65;
+  color: var(--text-3);
+}

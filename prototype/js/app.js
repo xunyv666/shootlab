@@ -188,7 +188,10 @@ window.BB = window.BB || {};
       ].join(' ').trim();
       return '<tr data-idx="' + i + '"' + (cls ? ' class="' + cls + '"' : '') + '>' +
         '<td class="c-idx">' + (i + 1) + '</td>' +
-        '<td>' + num(s.raw.releaseAngle, 1, '<span class="u">°</span>') + '</td>' +
+        '<td>' + num(s.raw.releaseAngle, 1, '<span class="u">°</span>') +
+          (s.raw.releaseAngleSrc === 'pose'
+            ? '<sup class="est-mark" title="球没被识别出来，这个值是按出手瞬间手腕的运动方向估算的，不是球的实测轨迹">估</sup>'
+            : '') + '</td>' +
         '<td class="hide-sm">' + num(s.raw.elbowAngle, 0, '<span class="u">°</span>') + '</td>' +
         '<td class="hide-sm">' + num(s.raw.releaseHeight, 0, '<span class="u">cm</span>') + '</td>' +
         '<td class="c-score"><b class="' + scCls + '">' + sc + '</b></td>' +

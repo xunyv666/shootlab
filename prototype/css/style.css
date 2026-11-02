@@ -351,6 +351,14 @@ td.c-idx { color: var(--text-3); }
 .c-score { text-align: center; }
 td.c-score b { font-size: 13px; }
 .u { font-size: 10px; color: var(--text-3); margin-left: 1px; }
+/* 「估」标记：这个出手角不是从球的轨迹量出来的，是按手腕速度方向推的。
+   必须让人一眼看出来，否则会把估算值当成实测数据。 */
+.est-mark {
+  margin-left: 3px; font-size: 9px; line-height: 1; padding: 1px 3px;
+  border-radius: 4px; border: 1px solid var(--rule);
+  color: var(--text-3); background: #f7f8fa; cursor: help;
+  vertical-align: super;
+}
 .tag-made, .tag-miss {
   font-size: 11px; padding: 2px 7px; border-radius: 5px; white-space: nowrap;
 }

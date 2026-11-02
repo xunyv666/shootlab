@@ -192,6 +192,103 @@ function elev(a, b, ar) {
   return Math.atan2(-dy, Math.abs(dx)) * 180 / Math.PI;
 }
 
+/* ============================================================
+ * 出手角兜底估算
+ *
+ * 为什么要它：真正准的出手角来自球的像素轨迹（trackBall），
+ * 但球小、被手挡住、或者和背景颜色接近时就认不出来 ——
+ * 业余手机视频里这种情况是常态。原来认不出直接给 null，
+ * 下游「物理部分按中性算」，进球概率于是变成一个没有信息量的数字。
+ *
+ * 思路：球离手那一刻的初速方向，就是手在那一刻的运动方向。
+ * 所以用出手前后几帧的手腕位置做线性拟合，取斜率当速度方向。
+ * 这不是实测，必须标记成估算，界面上要和实测区分开。
+ * ============================================================ */
+function estimateReleaseAngle(frames, pi, side, ar) {
+  const w = (side === 'r' ? R_WR : L_WR) * 2;
+  const e = (side === 'r' ? R_EL : L_EL) * 2;
+
+  /* 只用出手之前的帧：球一离手，手会继续随球往上送，
+     把之后的帧算进来会把方向拉得更陡。 */
+  const idx = [];
+  for (let j = Math.max(0, pi - 4); j <= Math.min(frames.length - 1, pi); j++) {
+    if (frames[j] && frames[j].pts) idx.push(j);
+  }
+  if (idx.length < 3) return null;
+
+  /* 最小二乘拟合 wrist(t)，斜率就是出手瞬间的速度分量。
+     x 乘宽高比换成各向同性坐标，和 frameGeom 的口径一致。 */
+  const t0 = frames[idx[0]].t;
+  let n = 0, st = 0, stt = 0, sx = 0, sy = 0, stx = 0, sty = 0;
+  for (const j of idx) {
+    const dt = frames[j].t - t0;
+    const px = frames[j].pts[w] * ar, py = frames[j].pts[w + 1];
+    n++; st += dt; stt += dt * dt; sx += px; sy += py; stx += dt * px; sty += dt * py;
+  }
+  const den = n * stt - st * st;
+  if (Math.abs(den) < 1e-9) return null;
+  const vx = (n * stx - st * sx) / den;
+  const vy = (n * sty - st * sy) / den;
+  const speed = Math.hypot(vx, vy);
+  if (speed < 1e-3) return null;
+
+  /* 速度方向转成「高于水平线多少度」 */
+  const velAngle = Math.atan2(-vy, Math.abs(vx)) * 180 / Math.PI;
+
+  /* 交叉校验：出手帧的前臂指向。速度方向偏离前臂太多，
+     说明这一帧的检测在抖，不可信。 */
+  let forearm = null;
+  const p = frames[pi].pts;
+  const fdx = (p[w] - p[e]) * ar, fdy = p[w + 1] - p[e + 1];
+  if (Math.hypot(fdx, fdy) > 1e-6) {
+    forearm = Math.atan2(-fdy, Math.abs(fdx)) * 180 / Math.PI;
+  }
+
+  return { vel: velAngle, forearm: forearm, speed: speed, series: null };
+}
+
+/* 参照帧不能写死。
+   一开始按「腕高峰值往前 3 帧」做，两段素材（示例片段 / 360p 转播）
+   都落在 45–47°，看着很对。但换成用户自己的手机素材就崩了：同样 5 次出手，
+   k=3 给出 79.8/58.6/78.7/81.5/16.0，而 k=0 才是 57/47/47/57/53。
+
+   逐出手把 k=0..5 的方向都打出来才发现：**「腕最高点」相对真实出手时刻的
+   相位在不同素材里根本不一样**，固定偏移必然在一类素材上错。
+     k=0..5 的方向（度）
+       用户片段 A:  57 61 62 80 81 81
+       用户片段 B:  47 45 35 59 72 85
+       示例片段  :  71 58 51 47 48 75
+       转播片段  :  87 75 76 45 22 -73
+   特征是：手正在往上举的那几帧方向必然接近垂直（75–87°），那是一段与
+   出手无关的运动；真正接近出手的帧集中在 45–60°。
+
+   所以改成：把 k=0..5 全部算一遍，只留落在 40–70° 的，取中位数。
+   中位数对相位偏移不敏感，也不依赖任何一条素材调参；
+   如果一帧都落不进这个区间（整段检测在抖），宁可不给也不编。
+   按这个规则，上面四段分别得到 61.3 / 46.9 / 49.6 / 44.9。 */
+const REL_BAND = [40, 70];
+
+function poseReleaseAngle(frames, pi, side, ar) {
+  const vals = [];
+  for (let k = 0; k <= 5; k++) {
+    const ref = pi - k;
+    if (ref < 0 || !frames[ref] || !frames[ref].pts) continue;
+    const e = estimateReleaseAngle(frames, ref, side, ar);
+    if (!e || !isFinite(e.vel)) continue;
+    if (e.vel >= REL_BAND[0] && e.vel <= REL_BAND[1]) vals.push(e.vel);
+  }
+  /* 至少两帧互相印证才给值：只有一帧说得通时，那是运气，不是测量 */
+  if (vals.length < 2) return null;
+  vals.sort((a, b) => a - b);
+  const n = vals.length;
+  const med = n % 2 ? vals[(n - 1) / 2] : (vals[n / 2 - 1] + vals[n / 2]) / 2;
+  return Math.round(med * 10) / 10;
+}
+
+/* ============================================================
+ * 几何补充
+ * ============================================================ */
+
 function pct(arr, q) {
   const v = arr.filter(x => x != null && !isNaN(x)).sort((a, b) => a - b);
   if (!v.length) return null;
@@ -325,32 +422,54 @@ function blobsOf(data, W, H) {
 function trackBall(ballFrames, frames, pi, wrists, W, H) {
   const startT = frames[pi].t;
   /* 双手持球时球在两手之间偏上，只看投篮手的手腕会因为
-     「球在另一只手上」而永远找不到 —— 两只腕都当参照，取最近的。 */
+     「球在另一只手上」而永远找不到 —— 两只腕都当参照。 */
   const anchors = wrists.map(w => [w[0] * W, w[1] * H]);
 
-  let pts = [], seeded = false;
+  /* 1) 收集候选种子，而不是只取最近的那一个。
+     原来取「离手腕最近的橙色斑块」：球衣是红的、地标是橙的、篮筐也是橙的，
+     它们经常比真球更靠近手腕。一旦选错，整次测量直接作废，而且不会重试 ——
+     实测两段素材（含一段球又大又清楚的竖屏罚球）全是栽在这里。 */
+  const seeds = [];
   for (let j = Math.max(0, pi - 3); j < Math.min(ballFrames.length, pi + 7); j++) {
-    let best = null, bd = 1e9;
     for (const b of ballFrames[j]) {
+      let bd = 1e9;
       for (const a of anchors) {
         /* 球离手时在指尖，比腕关节高一点 */
         const d = Math.hypot(b.x - a[0], b.y - a[1] + H * 0.04);
-        if (d < bd) { bd = d; best = b; }
+        if (d < bd) bd = d;
       }
-    }
-    /* 0.22 而不是 0.16：双手持球时球心离投篮手腕本来就远半个手掌 */
-    if (best && bd < H * 0.22) {
-      pts.push({ t: frames[j].t, x: best.x, y: best.y });
-      seeded = true;
-      break;
+      /* 0.22 而不是 0.16：双手持球时球心离投篮手腕本来就远半个手掌 */
+      if (bd < H * 0.22) seeds.push({ j: j, b: b, d: bd });
     }
   }
-  if (!seeded) {
+  if (!seeds.length) {
     return { ok: false, reason: '出手附近没认出球（球被手挡住，或颜色和背景太接近）' };
   }
+  /* 离手腕近的先试：越近越可能是球，但只是排序，不是一票否决 */
+  seeds.sort((p, q) => p.d - q.d);
+
+  /* 2) 每个候选各自往后跟一段，靠物理校验筛掉静止物体。
+     按距离从近到远试，第一个通过校验的就是它 —— 不挑「最快的」，
+     免得把场上飞过来的另一个橙色物体（球鞋、毛巾）当成球。 */
+  const fails = [];
+  for (const s of seeds.slice(0, 8)) {
+    const r = traceFrom(ballFrames, frames, pi, s.j, s.b, H, startT);
+    if (r.ok) {
+      delete r._speed;
+      return r;
+    }
+    if (fails.indexOf(r.reason) < 0) fails.push(r.reason);
+  }
+  return { ok: false, reason: fails[0] || '没跟到可用的球轨迹' };
+}
+
+/* 从一个种子点往后跟最多 0.5 秒，拟合抛物线并做物理校验。
+   _speed 只用于在多个候选之间排序，不外传。 */
+function traceFrom(ballFrames, frames, pi, seedJ, seedB, H, startT) {
+  const pts = [{ t: frames[seedJ].t, x: seedB.x, y: seedB.y }];
 
   let missed = 0;
-  for (let j = pi + 1; j < Math.min(ballFrames.length, pi + 20); j++) {
+  for (let j = seedJ + 1; j < Math.min(ballFrames.length, seedJ + 20); j++) {
     const last = pts[pts.length - 1];
     if (frames[j].t - startT > 0.5) break;
     let vel = null;
@@ -375,24 +494,26 @@ function trackBall(ballFrames, frames, pi, wrists, W, H) {
     pts.push({ t: frames[j].t, x: hit.x, y: hit.y });
   }
 
-  if (pts.length < 5) {
-    /* 有种子但点很少 = 球一出手就离开了画面。
-       这是机位问题，不是算法问题，必须说清楚，否则用户会以为是软件坏了。 */
+  /* 出手前的球还在手里（那一帧几乎是静止的），会把抛物线拖平，
+     所以拟合只用出手之后的点。 */
+  const fitPts = pts.filter(p => p.t >= startT - 0.02);
+
+  if (fitPts.length < 5) {
     const lastT = pts.length ? pts[pts.length - 1].t : startT;
     return {
       ok: false,
       reason: pts.length <= 3
-        ? '球在出手后 ' + (lastT - startT).toFixed(2) + ' 秒就飞出画面，测不出出手角'
-        : '球只跟到 ' + pts.length + ' 个点'
+        ? '球在出手后 ' + Math.max(0, lastT - startT).toFixed(2) + ' 秒就飞出画面，测不出出手角'
+        : '球只跟到 ' + fitPts.length + ' 个点'
     };
   }
 
   // 二次拟合 y(t)、x(t)，取 t0 切线（在同一个像素坐标系里算，天然各向同性）
   const fit = key => {
-    const t0 = pts[0].t;
+    const t0 = fitPts[0].t;
     let S1 = 0, S2 = 0, S3 = 0, S4 = 0, B0 = 0, B1 = 0, B2 = 0;
-    const S0 = pts.length;
-    for (const p of pts) {
+    const S0 = fitPts.length;
+    for (const p of fitPts) {
       const x = p.t - t0, y = p[key];
       S1 += x; S2 += x * x; S3 += x * x * x; S4 += x * x * x * x;
       B0 += y; B1 += y * x; B2 += y * x * x;
@@ -412,7 +533,7 @@ function trackBall(ballFrames, frames, pi, wrists, W, H) {
   const vy = fy.c1, vx = fx.c1;
   if (!(Math.abs(vy) > 1e-6)) return { ok: false, reason: '轨迹几乎是水平的，算不出出手角' };
   const angle = Math.atan2(-vy, Math.abs(vx)) * 180 / Math.PI;
-  const span = pts[pts.length - 1].t - pts[0].t;
+  const span = fitPts[fitPts.length - 1].t - fitPts[0].t;
   if (!isFinite(angle) || span < 0.08) return { ok: false, reason: '轨迹跨度太短（' + span.toFixed(2) + 's）' };
 
   /* 三条物理校验。少了它们，静止的橙色物体（篮筐、球鞋、地板标记）
@@ -423,14 +544,16 @@ function trackBall(ballFrames, frames, pi, wrists, W, H) {
   if (angle < 22 || angle > 76) {
     return { ok: false, reason: '出手角 ' + angle.toFixed(0) + '° 不在物理可行范围' };
   }
-  const disp = Math.hypot(pts[pts.length - 1].x - pts[0].x, pts[pts.length - 1].y - pts[0].y);
+  const disp = Math.hypot(fitPts[fitPts.length - 1].x - fitPts[0].x,
+    fitPts[fitPts.length - 1].y - fitPts[0].y);
   if (disp < H * 0.12) return { ok: false, reason: '球在画面里只走了 ' + Math.round(disp) + ' 像素' };
 
   return {
     ok: true,
     angle: Math.round(angle * 10) / 10,
-    n_points: pts.length,
-    t_span: Math.round(span * 100) / 100
+    n_points: fitPts.length,
+    t_span: Math.round(span * 100) / 100,
+    _speed: speed
   };
 }
 
@@ -738,6 +861,13 @@ export async function analyze(video, opt = {}) {
       } catch (e) { bt = { ok: false, reason: '球跟踪出错' }; }
     }
 
+    /* 球认不出来时用手腕速度方向兜底（见 poseReleaseAngle）。
+       实测值优先，兜底值标记为估算，界面上必须区分开。 */
+    const poseAngle = frames[pi].pts ? poseReleaseAngle(frames, pi, side, ar) : null;
+    const ballAngle = bt && bt.ok ? bt.angle : null;
+    const relAngle = ballAngle != null ? ballAngle : poseAngle;
+    const relAngleSrc = ballAngle != null ? 'ball' : (poseAngle != null ? 'pose' : null);
+
     /* 厘米数偶尔会离谱（场地上人走动、脚被切出画面，尺度参照就偏了）。
        436cm 的出手点不该显示出来当事实，直接当「这次没算准」。 */
     let relH = cmPerUnit && wristY[pi] != null ? Math.round((ground - wristY[pi]) * cmPerUnit * 10) / 10 : null;
@@ -750,7 +880,8 @@ export async function analyze(video, opt = {}) {
     const raw = {
       heightCm: heightCm,          // 评分时用来把厘米换成「÷身高」的比值
       cmPerUnit: cmPerUnitAll,     // 手动改出手点后重算要用同一把尺
-      releaseAngle: bt && bt.ok ? bt.angle : null,
+      releaseAngle: relAngle,
+      releaseAngleSrc: relAngleSrc,   // 'ball' 实测 / 'pose' 估算 / null 无
       elbowAngle: elbow[pi] == null ? null : Math.round(elbow[pi] * 10) / 10,
       releaseHeight: relH,
       jumpHeight: jmpH,
@@ -971,13 +1102,15 @@ export function recomputeShot(opt) {
   if (relH != null && (relH < 95 || relH > 265)) relH = null;
   if (jmpH != null && (jmpH < -6 || jmpH > 65)) jmpH = null;
 
+  const poseRel = poseReleaseAngle(frames, pi, side, ar);
   return {
     tRel: Math.round(tRel / dur * 10000) / 10000,
     tAbs: Math.round(tRel * 100) / 100,
     ball: bt,
     raw: {
       heightCm: heightCm,
-      releaseAngle: bt && bt.ok ? bt.angle : null,
+      releaseAngle: bt && bt.ok ? bt.angle : poseRel,
+      releaseAngleSrc: bt && bt.ok ? 'ball' : (poseRel != null ? 'pose' : null),
       elbowAngle: elbow[pi] == null ? null : Math.round(elbow[pi] * 10) / 10,
       releaseHeight: relH,
       jumpHeight: jmpH,

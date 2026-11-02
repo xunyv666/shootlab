@@ -862,12 +862,12 @@ td.c-score b { font-size: 13px; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 22px 26px;
+  gap: 7px;
+  padding: 18px 26px;
   text-align: center;
   color: rgba(255, 255, 255, .95);
 }
-.drop-art { color: #fbbf7a; width: 104px; height: 76px; opacity: .92; }
+.drop-art { color: #fbbf7a; width: 104px; height: 66px; opacity: .92; }
 .drop-art svg { width: 100%; height: 100%; }
 .drop h3 {
   font-size: 15px;
@@ -902,8 +902,12 @@ td.c-score b { font-size: 13px; }
   margin-top: 2px;
   font-size: 10.5px;
   color: rgba(255, 255, 255, .38);
-  max-width: 400px;
-  line-height: 1.6;
+  max-width: 430px;
+  line-height: 1.65;
+}
+.drop-tip b {
+  color: rgba(255, 255, 255, .7);
+  font-weight: 600;
 }
 
 /* 引擎预热提示：首次近 19MB 下载必须让人看见，否则和卡死没区别 */
@@ -1608,4 +1612,21 @@ td.c-score b { font-size: 13px; }
   background: var(--amber-soft);
   color: var(--amber);
   vertical-align: 1px;
+}
+
+/* 空态卡片：加了两行拍摄要求后，窄屏纵向装不下，收紧留白与图标 */
+@media (max-width: 720px) {
+  .drop { gap: 6px; padding: 14px 16px; }
+  .drop-art { width: 78px; height: 54px; }
+  .drop h3 { font-size: 14px; }
+  .drop-steps { gap: 6px; font-size: 10px; }
+}
+@media (max-width: 420px) {
+  .drop { gap: 5px; padding: 12px; }
+  .drop-art { width: 52px; height: 36px; }
+}
+
+/* 320px（iPhone SE 一代）连图标都放不下了，优先保住文字 */
+@media (max-width: 340px) {
+  .drop-art { display: none; }
 }

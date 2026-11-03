@@ -21,3 +21,6 @@ _site/
 
 # 临时抓取的接口响应
 .tmp_*
+
+# 实验性方案（YOLO 检测）的临时产物与测试素材，不进仓库
+/tools/experiments/

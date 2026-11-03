@@ -96,6 +96,8 @@
         <span class="ghost-note" id="ghostNote" hidden></span>
         <span class="stage-chip" id="stageChip" hidden></span>
         <span class="frame-badge" id="frameBadge" hidden></span>
+        <!-- 画投篮轨迹需要知道篮筐在哪：点一下画面就标定，标一次全片通用 -->
+        <div class="rim-hint" id="rimHint" hidden></div>
       </div>
 
       <div class="track" id="track" hidden>
@@ -301,6 +303,7 @@
 <script src="js/metrics.js"></script>
 <script src="js/video-player.js"></script>
 <script src="js/overlay.js"></script>
+<script src="js/arc2d.js"></script>
 <script src="js/ghost.js"></script>
 <script src="js/zone.js"></script>
 <script src="js/arc3d.js"></script>

@@ -254,6 +254,31 @@ button { font-family: inherit; cursor: pointer; }
   padding: 3px 8px;
   border-radius: 6px;
 }
+/* 篮筐标定提示。画投篮轨迹得先知道筐在哪，点一下画面最省事。
+   pointer-events 必须是 none —— 它浮在画面上，挡点击就标不到点了。 */
+.rim-hint {
+  position: absolute; left: 50%; bottom: 42px;
+  transform: translateX(-50%);
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, .94);
+  background: rgba(249, 115, 22, .20);
+  border: 1px solid rgba(249, 115, 22, .48);
+  padding: 5px 13px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100% - 24px);
+  overflow: hidden; text-overflow: ellipsis;
+  animation: rimHintIn .18s ease-out;
+}
+.rim-hint.is-done {
+  color: rgba(255, 255, 255, .62);
+  background: rgba(255, 255, 255, .08);
+  border-color: rgba(255, 255, 255, .15);
+}
+@keyframes rimHintIn { from { opacity: 0; transform: translate(-50%, 4px); } }
+.stage.picking-rim { cursor: crosshair; }
 
 /* ---------------- 时间轴 ---------------- */
 .track {

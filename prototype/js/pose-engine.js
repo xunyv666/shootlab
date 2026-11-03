@@ -982,11 +982,21 @@ export async function analyze(video, opt = {}) {
       kneeFlex: kmin === Infinity ? null : Math.round(kmin * 10) / 10
     };
 
+    /* 出手瞬间的手腕位置（归一化坐标）：视频上那条 2D 弧线的起点。
+       两手取平均，因为单手持球时另一只手常常还贴在球侧，平均更接近球心。
+       pts 是扁平数组，第 k 个点是 [k*2]=x、[k*2+1]=y，15/16 是左右腕。 */
+    const pf = frames[pi].pts;
+    const releasePt = pf ? [
+      (pf[30] + pf[32]) / 2,
+      (pf[31] + pf[33]) / 2
+    ] : null;
+
     shots.push({
       id: si + 1,
       tRel: Math.round(tRel / dur * 10000) / 10000,
       tAbs: Math.round(tRel * 100) / 100,
       made: null,
+      releasePt: releasePt,   // 画 2D 弧线用；null 表示这一球算不出起点
       raw: raw,
       ball: bt
     });

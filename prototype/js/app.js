@@ -15,6 +15,7 @@ window.BB = window.BB || {};
     shots: [], starId: D.activeStar, activeShot: null, res: null, exp: null, url: null,
     cursor: null,        // 播放位置落在哪一次出手附近（null = 不在出手附近）
     dist: 4.6,           // 这一球从多远投的（米）：概率模型的前提
+    rim: null,           // 篮筐位置（视频归一化坐标）：画 2D 轨迹要用
     lastRender: -1
   };
 
@@ -176,7 +177,9 @@ window.BB = window.BB || {};
     card.querySelectorAll('.prob-dist button').forEach(function (btn) {
       btn.addEventListener('click', function () {
         state.dist = +btn.dataset.d;
+        if (BB.Arc2D) BB.Arc2D.setDist(state.dist);
         renderProb();
+        repaintOverlay();
       });
     });
   }
@@ -256,6 +259,13 @@ window.BB = window.BB || {};
     if (Xidx >= 0 && patch.made !== undefined) X.shots[Xidx].made = patch.made;
     /* 「手动修正过」这个标记讲解里也要认，否则文案还会念旧的自动判读 */
     if (Xidx >= 0 && patch.manual) X.shots[Xidx].manual = true;
+    syncArc();   // 改了出手时刻，弧线出现的时间点得跟着挪
+  }
+
+  /* 出手列表被编辑过（删一球、改时刻）之后，弧线缓存必须重算，
+     否则屏幕上还留着已经删掉那一球的轨迹。 */
+  function syncArc() {
+    if (BB.Arc2D) BB.Arc2D.configure({ shots: state.exp ? state.exp.shots : [] });
   }
 
   function resortShots() {
@@ -286,6 +296,7 @@ window.BB = window.BB || {};
       X.shots.length = 0;
       state.shots = [];
     }
+    syncArc();
     updateAll();
   }
 
@@ -563,6 +574,29 @@ window.BB = window.BB || {};
     setTimeout(function () { layer.hidden = true; }, 180);
   }
 
+  /* ---------------- 篮筐标定 ----------------
+     画轨迹得先知道筐在哪。让算法自己找筐要另下一个检测模型，夜场远景下
+     很不稳；让用户点一下既准又零成本，而且标一次全片所有出手共用。 */
+  function updateRimHint() {
+    var el = $('rimHint'), stage = $('stage');
+    if (!el) return;
+    var ok = state.exp && state.exp.meta && state.exp.meta.userVideo && state.shots.length;
+    if (!ok) {
+      el.hidden = true;
+      if (stage) stage.classList.remove('picking-rim');
+      return;
+    }
+    el.hidden = false;
+    el.classList.toggle('is-done', !!state.rim);
+    el.textContent = state.rim ? '篮筐已标定 · 点画面可改' : '点一下画面里的篮筐，就能画出投篮轨迹';
+    if (stage) stage.classList.toggle('picking-rim', !state.rim);
+  }
+
+  function repaintOverlay() {
+    var v = $('video');
+    if (BB.Overlay) BB.Overlay.render(v ? v.currentTime : 0, BB.Overlay.hasBundle());
+  }
+
   /* ---------------- 结果落位：示例和用户视频走同一条路径 ---------------- */
   function applyResult(X, opt) {
     opt = opt || {};
@@ -582,6 +616,19 @@ window.BB = window.BB || {};
 
     if (!opt.alreadyLoaded) BB.VideoPlayer.loadUrl(opt.url || X.meta.video);
     syncVideoAspect();
+
+    /* 2D 轨迹：数据一换就重算。这里必须用引擎那份 shots（带 releasePt 和 raw），
+       不是上面为界面重建的那份视图 —— 后者只有显示字段。 */
+    if (BB.Arc2D) {
+      BB.Arc2D.configure({
+        shots: X.shots,
+        ar: X.meta.videoAspect || (16 / 9),
+        dist: state.dist,
+        rim: state.rim
+      });
+      /* 只有用户自己的视频才提示标定：示例样本没有「我的筐」这个概念 */
+      updateRimHint();
+    }
 
     $('stage').classList.add('has-video');
     $('drop').hidden = true;
@@ -672,11 +719,15 @@ window.BB = window.BB || {};
     state.exp = null;
     state.shots = [];
     state.activeShot = null;
+    /* 换了视频，机位就变了，标定必须作废 —— 沿用旧筐会把弧线画到错误的地方 */
+    state.rim = null;
+    if (BB.Arc2D) BB.Arc2D.clear();
     if (state.url) { URL.revokeObjectURL(state.url); state.url = null; }
     $('stage').style.aspectRatio = '';
     BB.Overlay.clearBundle();
     BB.Overlay.setIdle(true);
     BB.Overlay.setVideoAspect(0);
+    updateRimHint();
     BB.VideoPlayer.setIdle();
     if (!keepPanel) {
       $('stage').classList.remove('has-video');
@@ -910,6 +961,19 @@ window.BB = window.BB || {};
     BB.VideoPlayer.mount($('video'));
     BB.Overlay.mount($('overlay'));
 
+    /* 点画面标定篮筐。舞台里还有播放按钮等控件，点按钮不算标定。 */
+    $('stage').addEventListener('click', function (e) {
+      if (e.target && e.target.closest && e.target.closest('button')) return;
+      if (!state.exp || !state.exp.meta || !state.exp.meta.userVideo) return;
+      if (!state.shots.length) return;
+      var p = BB.Overlay.clientToNorm(e.clientX, e.clientY);
+      if (!p) return;                       // 点在黑边上，当没点
+      state.rim = p;
+      if (BB.Arc2D) BB.Arc2D.setRim(p);
+      updateRimHint();
+      repaintOverlay();
+    });
+
     BB.VideoPlayer.onTime(function (t, duration, playing) {
       var ratio = duration ? t / duration : 0;
       $('trackFill').style.width = (ratio * 100) + '%';
@@ -1066,10 +1130,12 @@ window.BB = window.BB || {};
     if (BB.Arc3D) BB.Arc3D.mount($('arcCard'));
     var ok = BB.Charts.init();
     BB.Overlay.setIdle(true);
-    if (BB.Ghost) {
-      BB.Ghost.applyFromDims();
-      BB.Overlay.onDraw(BB.Ghost.render);
-    }
+    if (BB.Ghost) BB.Ghost.applyFromDims();
+    /* 叠加层只有一个绘制钩子，骨骼和 2D 弧线都得画，所以在这里合成一个 */
+    BB.Overlay.onDraw(function (ctx, box, f, side, t) {
+      if (BB.Ghost && BB.Ghost.render) BB.Ghost.render(ctx, box, f, side);
+      if (BB.Arc2D) BB.Arc2D.render(ctx, box, t);
+    });
     updateAll();
     if (ok) setTimeout(BB.Charts.resize, 60);
   }

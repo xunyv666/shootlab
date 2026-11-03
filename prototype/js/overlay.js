@@ -80,6 +80,20 @@ window.BB = window.BB || {};
   function sx(v) { return box.x + v * box.w; }
   function sy(v) { return box.y + v * box.h; }
 
+  /* 鼠标位置 → 视频画面归一化坐标。标定篮筐要用：
+     舞台比视频宽时两侧有黑边，直接按画布宽高换算会偏一大截。 */
+  function clientToNorm(clientX, clientY) {
+    if (!cv || !w) return null;
+    var rect = cv.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    computeBox();
+    if (!box.w || !box.h) return null;
+    var nx = ((clientX - rect.left) * (w / rect.width) - box.x) / box.w;
+    var ny = ((clientY - rect.top) * (h / rect.height) - box.y) / box.h;
+    if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;   // 点在黑边上，不算
+    return [nx, ny];
+  }
+
   function line(a, b, color, width, dash) {
     ctx.save();
     ctx.beginPath();
@@ -336,7 +350,7 @@ window.BB = window.BB || {};
       var i = Math.round(lastT * bundleFps);
       i = Math.max(0, Math.min(bundle.length - 1, i));
       drawFlat(bundle[i]);
-      if (extraDraw) extraDraw(ctx, box, bundle[i], bundleSide);
+      if (extraDraw) extraDraw(ctx, box, bundle[i], bundleSide, lastT);
       return;
     }
 
@@ -362,6 +376,7 @@ window.BB = window.BB || {};
     },
     render: render,
     resize: resize,
+    clientToNorm: clientToNorm,
     setFrame: function (landmarks) { realFrame = landmarks || null; },
     /* 挂载整段骨骼包（离线提取），之后渲染按时间自动取帧 */
     setBundle: function (b, fps, side) {

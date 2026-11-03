@@ -207,14 +207,20 @@
       <div class="card chart-card">
         <div class="card-head">
           <h2>动作维度对比</h2>
-          <span class="sub">我 vs <b id="starNameLabel">库里</b></span>
+          <div class="head-right">
+            <span class="sub">我 vs <b id="starNameLabel">库里</b></span>
+            <button class="zoom-btn" data-chart="radar" title="放大查看" aria-label="放大查看">放大</button>
+          </div>
         </div>
         <div class="chart" id="radarChart"></div>
       </div>
       <div class="card chart-card">
         <div class="card-head">
           <h2>出手趋势</h2>
-          <span class="sub">综合评分 / 出手角度</span>
+          <div class="head-right">
+            <span class="sub">综合评分 / 出手角度</span>
+            <button class="zoom-btn" data-chart="trend" title="放大查看" aria-label="放大查看">放大</button>
+          </div>
         </div>
         <div class="chart" id="trendChart"></div>
       </div>
@@ -229,6 +235,26 @@
 </main>
 
 <div class="modal" id="modal" hidden></div>
+
+<!-- 图表放大层：趋势图要放 20 次出手，半屏宽全是挤在一起的点 -->
+<div class="chart-zoom" id="chartZoom" hidden>
+  <div class="cz-panel">
+    <div class="cz-head">
+      <div>
+        <h3 id="czTitle">出手趋势</h3>
+        <p class="sub" id="czSub">滚轮缩放，按住拖动平移</p>
+      </div>
+      <div class="cz-tools">
+        <div class="cz-tabs" id="czTabs">
+          <button data-view="trend">出手趋势</button>
+          <button data-view="curve">动作时序</button>
+        </div>
+        <button class="modal-close" id="czClose" aria-label="关闭">×</button>
+      </div>
+    </div>
+    <div class="cz-body" id="czBody"></div>
+  </div>
+</div>
 
 <!-- 库里原话回看层：点击任意引用块，直接跳到讲解那一秒 -->
 <div class="quote-layer" id="quoteLayer" hidden>
@@ -318,9 +344,9 @@
      模块脚本天然 defer，跑在 app.js 之后；app.js 只在用户选视频时才碰它，
      所以顺序不影响。必须走 http(s) 打开，file:// 下浏览器不允许加载模块。 -->
 <script type="module">
-  import { analyze, isReady, recomputeShot, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
+  import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
   window.BB = window.BB || {};
-  window.BB.PoseEngine = { analyze, isReady, recomputeShot, preload, onEngineProgress, engineIsReady };
+  window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady };
   document.documentElement.classList.add('engine-ready');
 </script>
 <script>

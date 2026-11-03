@@ -23,11 +23,18 @@
   var card = null, cv = null, ctx = null;
   var W = 0, H = 0, DPR = 1;
   var model = null;          // 当前这一球的几何数据
+  var ghosts = [];           // 同一段视频里其它能解出轨迹的球（淡色对比）
   var lastDist = 4.6;        // 空态时也要按当前距离档位画地面
   var drag = null;
 
   /* 视角：绕竖轴转 yaw，俯仰 pitch。默认三分之四视角，能看出弧线高度 */
-  var view = { yaw: -0.95, pitch: 0.22 };
+  var VIEWS = {
+    iso: { yaw: -0.95, pitch: 0.22 },
+    side: { yaw: 0, pitch: 0.06 },
+    top: { yaw: -0.95, pitch: 1.02 }
+  };
+  var view = { yaw: VIEWS.iso.yaw, pitch: VIEWS.iso.pitch };
+  var viewName = 'iso';
 
   /* ---------- 投影 ----------
      先按「焦距 = 1」投一次，再把所有关键点的包围盒缩放铺满画布。
@@ -130,6 +137,20 @@
     ctx.fillText(txt, x, y);
   }
 
+  function drawGhosts(P) {
+    for (var i = 0; i < ghosts.length; i++) {
+      var gp = ghosts[i].pts;
+      ctx.beginPath();
+      for (var j = 0; j < gp.length; j++) {
+        var q = P(gp[j]);
+        j ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
+      }
+      ctx.strokeStyle = 'rgba(234,88,12,.16)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+    }
+  }
+
   function drawGround(P, m) {
     var d = m ? m.d : 6.75;
     var zr = Math.max(2.4, d * 0.6);
@@ -189,6 +210,8 @@
     var cam = makeCamera(d, relH);
     /* 让包围盒把篮筐和地面也算进去，否则弧线会顶满、筐被切掉 */
     var key = m ? m.pts.slice() : [];
+    /* 其它出手也要进包围盒，否则会画到画布外面去 */
+    for (var gi = 0; gi < ghosts.length; gi++) key = key.concat(ghosts[gi].pts);
     var zr = Math.max(2.4, d * 0.6);
     key.push([0, 0, -zr], [0, 0, zr], [d, 0, -zr], [d, 0, zr],
              [d + BOARD_BACK, RIM_H + 0.9, 0]);
@@ -197,6 +220,12 @@
 
     drawGround(P, { d: d });
     drawHoop(P, { d: d });
+
+    /* 同一段视频里其它能解出的出手：淡色铺在后面。
+       单看一条线看不出「这 20 球稳不稳」，叠起来一眼就知道散不散。
+       当前这一球没角度时也要画 —— 否则一张空旷的图上写着「10 次出手」，
+       却一条线都看不到。 */
+    drawGhosts(P);
 
     if (!m) { drawEmpty(P, d); return; }
 
@@ -252,8 +281,10 @@
   function drawEmpty(P, d) {
     /* 场景照画（地面+篮筐），只缺那条线 —— 全白一片会让人以为图没加载出来。
        提示做成一条带底色的条，压在任何东西上都能读。 */
-    var t1 = '这一次出手没有出手角，画不出轨迹';
-    var t2 = '没有出手角就没有初速度，硬画一条曲线就是编的';
+    var t1 = '这一次出手没有出手角，画不出这一条';
+    var t2 = ghosts.length
+      ? '淡色的是其它 ' + ghosts.length + ' 次算得出的出手，可以对比着看'
+      : '没有出手角就没有初速度，硬画一条曲线就是编的';
     ctx.font = '500 12px system-ui, -apple-system, "Segoe UI", sans-serif';
     var w1 = ctx.measureText(t1).width;
     ctx.font = '500 11px system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -280,7 +311,11 @@
     card.innerHTML =
       '<div class="card-head">' +
         '<h2>3D 出手轨迹<span class="arc-tag">推算</span></h2>' +
-        '<span class="sub">拖一下可以转视角</span>' +
+        '<div class="arc-views">' +
+          '<button data-v="iso" class="on">3/4</button>' +
+          '<button data-v="side">正侧</button>' +
+          '<button data-v="top">俯视</button>' +
+        '</div>' +
       '</div>' +
       '<div class="arc-canvas-wrap"><canvas class="arc-canvas"></canvas></div>' +
       '<div class="arc-facts"></div>' +
@@ -288,6 +323,12 @@
 
     cv = card.querySelector('.arc-canvas');
     ctx = cv.getContext('2d');
+
+    card.querySelectorAll('.arc-views button').forEach(function (b) {
+      b.addEventListener('click', function () { setView(b.dataset.v); });
+    });
+    /* 拖乱了双击回默认视角，比记住上一次姿势更符合直觉 */
+    cv.addEventListener('dblclick', function () { setView('iso'); });
 
     cv.addEventListener('pointerdown', function (e) {
       drag = { x: e.clientX, y: e.clientY, yaw: view.yaw, pitch: view.pitch };
@@ -297,6 +338,11 @@
       if (!drag) return;
       view.yaw = drag.yaw + (e.clientX - drag.x) * 0.008;
       view.pitch = Math.max(-0.05, Math.min(1.15, drag.pitch + (e.clientY - drag.y) * 0.006));
+      /* 手一拖就不再是预设视角了，按钮别继续亮着骗人 */
+      if (viewName) {
+        viewName = null;
+        card.querySelectorAll('.arc-views button').forEach(function (b) { b.classList.remove('on'); });
+      }
       draw();
     });
     cv.addEventListener('pointerup', function () { drag = null; });
@@ -342,20 +388,48 @@
     build();
   }
 
+  function setView(name) {
+    var v = VIEWS[name] || VIEWS.iso;
+    view.yaw = v.yaw;
+    view.pitch = v.pitch;
+    viewName = name;
+    if (card) {
+      card.querySelectorAll('.arc-views button').forEach(function (b) {
+        b.classList.toggle('on', b.dataset.v === name);
+      });
+    }
+    draw();
+  }
+
   /** @param sh   一次出手 { raw: {...} }
-   *  @param dist 出手距离（米），跟着「这一球从哪投的」档位走 */
-  function update(sh, dist) {
+   *  @param dist 出手距离（米），跟着「这一球从哪投的」档位走
+   *  @param idx  这一球在 all 里的下标（淡色对比时要把自己排除掉）
+   *  @param all  这一段视频的全部出手：能解出轨迹的都画成淡色 */
+  function update(sh, dist, idx, all) {
     if (!card) return;
     lastDist = dist;
     model = sh ? solve(sh, dist) : null;
+
+    ghosts = [];
+    if (all && all.length > 1) {
+      for (var i = 0; i < all.length && ghosts.length < 40; i++) {
+        if (i === idx) continue;
+        var gm = solve(all[i], dist);
+        if (gm.ok) ghosts.push(gm);
+      }
+    }
+
     card.hidden = !sh;
     if (!sh) return;
     renderFacts(model);
     var note = card.querySelector('.arc-note');
     if (note) {
       var est = sh.raw && sh.raw.releaseAngleSrc === 'pose';
+      var bad = sh.raw && sh.raw.angleUnreliable;
       note.innerHTML = '这条线是按出手角和出手点解出来的抛物线，不是从画面里跟拍到的球。'
-        + (est ? '<b>这一次的出手角本身也是估算的（球没认出来，只能按手腕方向推），误差会顺着传进这条曲线。</b>' : '')
+        + (ghosts.length ? '后面那些淡色弧线是这一段里其它 <b>' + ghosts.length + '</b> 次出手，叠在一起能看出弧线稳不稳。' : '')
+        + (bad ? '<b>机位选的是正面，横向位移基本丢失，这一球的角度不可信，别拿它跟别人比。</b>'
+          : (est ? '<b>这一次的出手角本身也是估算的（球没认出来，只能按手腕方向推），误差会顺着传进这条曲线。</b>' : ''))
         + '球的实测轨迹要能连续跟住 0.4 秒以上才算，目前的素材大多做不到。';
     }
     /* 空态时也能画出地面和篮筐，让人知道这是什么视角 */

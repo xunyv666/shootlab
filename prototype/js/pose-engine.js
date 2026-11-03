@@ -268,21 +268,74 @@ function estimateReleaseAngle(frames, pi, side, ar) {
    按这个规则，上面四段分别得到 61.3 / 46.9 / 49.6 / 44.9。 */
 const REL_BAND = [40, 70];
 
-function poseReleaseAngle(frames, pi, side, ar) {
-  const vals = [];
+/* ---------------- 机位补偿 ----------------
+   画面上的出手角是**投影**出来的。机位越靠近「正对投篮者」，横向位移
+   被压缩得越厉害，算出来的角就越陡（记忆里「正面拍会算偏高」就是这件事）。
+
+   模型：机位偏离正侧面 α（0 = 正侧，90 = 正前），
+         tan(观测角) = tan(真实角) / cos α
+   反解：真实角 = atan(tan(观测角) · cos α)
+
+   α 大到一定程度就没法救：横向分量几乎全丢，反解出来的只是个数字。
+   所以超过 50° 直接判「测不出」，不硬给值。 */
+const CAM_MAX = 50;
+
+function compensateAngle(obs, camAngle) {
+  const a = Math.abs(camAngle || 0);
+  if (a > CAM_MAX) return null;
+  const c = Math.cos(a * Math.PI / 180);
+  if (c < 1e-6) return null;
+  return Math.atan(Math.tan(obs * Math.PI / 180) * c) * 180 / Math.PI;
+}
+
+/* 候选池比最终判据宽：补偿后才判 40–70。
+   先按窄区间筛会把「斜侧拍出来 72°、补偿后 61°」这种真值直接丢掉。 */
+const CAND_BAND = [30, 85];
+
+function pickAngle(cands, camAngle) {
+  /* 两条路径，判据相同：至少两帧互相印证，中位数落在 40–70 才认。 */
+  const medOf = arr => {
+    const v = arr.slice().sort((a, b) => a - b);
+    const n = v.length;
+    return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2;
+  };
+
+  /* 没选机位、或选的是正侧拍：补偿是恒等变换，走和以前一模一样的路径。
+     这条必须保持，否则所有老视频的出手角都会悄悄变。 */
+  if (camAngle == null || Math.abs(camAngle) < 0.5) {
+    const strict = cands.filter(v => v >= REL_BAND[0] && v <= REL_BAND[1]);
+    if (strict.length < 2) return null;
+    return Math.round(medOf(strict) * 10) / 10;
+  }
+
+  /* 选了斜侧：先全部补偿，再取中位数，最后判范围。
+     注意不能「补偿后再用 40–70 筛一遍」—— 补偿会让整体下移，
+     原来的真值反而被下限剔掉，只剩偏高的噪声，中位数会不降反升。 */
+  const comp = [];
+  for (const a of cands) {
+    const t = compensateAngle(a, camAngle);
+    if (t != null && isFinite(t)) comp.push(t);
+  }
+  /* 至少两帧互相印证才给值：只有一帧说得通时，那是运气，不是测量 */
+  if (comp.length < 2) return null;
+  const med = medOf(comp);
+  if (med < REL_BAND[0] || med > REL_BAND[1]) return null;
+  return Math.round(med * 10) / 10;
+}
+
+/* 返回 { value, cands }：cands 是**未补偿**的原始观测角，
+   用户后来改机位时不用重跑姿态，直接拿它重挑一次就行。 */
+function poseReleaseAngle(frames, pi, side, ar, camAngle) {
+  const cands = [];
   for (let k = 0; k <= 5; k++) {
     const ref = pi - k;
     if (ref < 0 || !frames[ref] || !frames[ref].pts) continue;
     const e = estimateReleaseAngle(frames, ref, side, ar);
     if (!e || !isFinite(e.vel)) continue;
-    if (e.vel >= REL_BAND[0] && e.vel <= REL_BAND[1]) vals.push(e.vel);
+    /* 不在这里取整：取整后再取中位数，和以前的算法会差零点几度 */
+    if (e.vel >= CAND_BAND[0] && e.vel <= CAND_BAND[1]) cands.push(e.vel);
   }
-  /* 至少两帧互相印证才给值：只有一帧说得通时，那是运气，不是测量 */
-  if (vals.length < 2) return null;
-  vals.sort((a, b) => a - b);
-  const n = vals.length;
-  const med = n % 2 ? vals[(n - 1) / 2] : (vals[n / 2 - 1] + vals[n / 2]) / 2;
-  return Math.round(med * 10) / 10;
+  return { value: pickAngle(cands, camAngle), cands };
 }
 
 /* ============================================================
@@ -576,6 +629,12 @@ function smoothPeaks(sig, ts) {
 export async function analyze(video, opt = {}) {
   const onProgress = opt.onProgress || (() => {});
   const heightCm = opt.heightCm || 178;
+  /* 机位偏离正侧面的角度（0 = 正侧拍，45 = 斜侧，90 = 正对投篮者）。
+     不传就不补偿，行为和以前一致。 */
+  const camAngle = opt.camAngle == null ? null : Math.abs(+opt.camAngle);
+  /* 正面机位不补偿，只把结论标成不可信（和 recalcAngles 同一套判断） */
+  const camBlind = camAngle != null && camAngle > CAM_MAX;
+  const camEff = camBlind ? null : camAngle;
 
   onProgress('正在加载姿态模型…', 0.02);
   const det = await loadDetector();
@@ -952,7 +1011,10 @@ export async function analyze(video, opt = {}) {
 
     /* 球认不出来时用手腕速度方向兜底（见 poseReleaseAngle）。
        实测值优先，兜底值标记为估算，界面上必须区分开。 */
-    const poseAngle = frames[pi].pts ? poseReleaseAngle(frames, pi, side, ar) : null;
+    const poseInfo = frames[pi].pts
+      ? poseReleaseAngle(frames, pi, side, ar, camEff)
+      : { value: null, cands: [] };
+    const poseAngle = poseInfo.value;
     const ballAngle = bt && bt.ok ? bt.angle : null;
     const relAngle = ballAngle != null ? ballAngle : poseAngle;
     const relAngleSrc = ballAngle != null ? 'ball' : (poseAngle != null ? 'pose' : null);
@@ -971,6 +1033,10 @@ export async function analyze(video, opt = {}) {
       cmPerUnit: cmPerUnitAll,     // 手动改出手点后重算要用同一把尺
       releaseAngle: relAngle,
       releaseAngleSrc: relAngleSrc,   // 'ball' 实测 / 'pose' 估算 / null 无
+      /* 这一球所有「说得通」的原始观测角（未做机位补偿）。
+         换机位时用它重挑，不必重跑姿态 —— 20 次出手重跑要一分半。 */
+      angleCands: poseInfo.cands,
+      angleUnreliable: camBlind,   // 正面机位：值保留，但不可信
       elbowAngle: elbow[pi] == null ? null : Math.round(elbow[pi] * 10) / 10,
       releaseHeight: relH,
       jumpHeight: jmpH,
@@ -1101,6 +1167,42 @@ export async function analyze(video, opt = {}) {
 export function isReady() { return !!detectorPromise; }
 
 /* ============================================================
+ * 换机位重挑出手角
+ *
+ * 用户选机位通常在分析完成之后。为此重跑一遍姿态要一分半，太亏 ——
+ * 每球已经把「说得通的观测角」存进 raw.angleCands，这里只是换一个
+ * 机位偏角重新挑中位数，几毫秒的事。
+ *
+ * 只动估算值（src = 'pose' 或没值）；球真被认出来（src = 'ball'）的不碰。
+ * ============================================================ */
+export function recalcAngles(exp, camAngle) {
+  if (!exp || !exp.shots) return 0;
+  const a = camAngle == null ? null : Math.abs(+camAngle);
+  /* 正面机位横向位移几乎全丢，反解出来的是个数字，不是测量。
+     这时候不清空（清空等于装作没测过），保留原值但打上不可信标记。 */
+  const blind = a != null && a > CAM_MAX;
+  const eff = blind ? null : a;
+  let got = 0;
+  exp.shots.forEach(s => {
+    const r = s.raw;
+    if (!r || r.releaseAngleSrc === 'ball') return;
+    const v = pickAngle(r.angleCands || [], eff);
+    if (v != null) {
+      r.releaseAngle = v;
+      r.releaseAngleSrc = 'pose';
+      r.angleUnreliable = blind;
+      got++;
+    } else {
+      r.releaseAngle = null;
+      r.releaseAngleSrc = null;
+      r.angleUnreliable = false;
+    }
+  });
+  if (exp.meta) exp.meta.camAngle = a;
+  return got;
+}
+
+/* ============================================================
  * 手动改出手点
  *
  * 为什么要这个：自动判定靠「手腕举到接近头高」，一个上篮式的抬手、
@@ -1204,7 +1306,10 @@ export function recomputeShot(opt) {
   if (relH != null && (relH < 95 || relH > 265)) relH = null;
   if (jmpH != null && (jmpH < -6 || jmpH > 65)) jmpH = null;
 
-  const poseRel = poseReleaseAngle(frames, pi, side, ar);
+  const camA = opt.camAngle == null ? null : Math.abs(+opt.camAngle);
+  const camB = camA != null && camA > CAM_MAX;
+  const poseInfo = poseReleaseAngle(frames, pi, side, ar, camB ? null : camA);
+  const poseRel = poseInfo.value;
   return {
     tRel: Math.round(tRel / dur * 10000) / 10000,
     tAbs: Math.round(tRel * 100) / 100,
@@ -1213,6 +1318,8 @@ export function recomputeShot(opt) {
       heightCm: heightCm,
       releaseAngle: bt && bt.ok ? bt.angle : poseRel,
       releaseAngleSrc: bt && bt.ok ? 'ball' : (poseRel != null ? 'pose' : null),
+      angleCands: poseInfo.cands,
+      angleUnreliable: camB,
       elbowAngle: elbow[pi] == null ? null : Math.round(elbow[pi] * 10) / 10,
       releaseHeight: relH,
       jumpHeight: jmpH,

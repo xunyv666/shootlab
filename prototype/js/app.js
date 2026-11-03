@@ -15,6 +15,7 @@ window.BB = window.BB || {};
     shots: [], starId: D.activeStar, activeShot: null, res: null, exp: null, url: null,
     cursor: null,        // 播放位置落在哪一次出手附近（null = 不在出手附近）
     dist: 4.6,           // 这一球从多远投的（米）：概率模型的前提
+    camAngle: null,      // 拍摄机位偏离正侧面的角度；null = 不确定，不补偿
     rim: null,           // 篮筐位置（视频归一化坐标）：画 2D 轨迹要用
     lastRender: -1
   };
@@ -117,6 +118,16 @@ window.BB = window.BB || {};
     { name: '罚球线', d: 4.6 }, { name: '三分', d: 6.75 }
   ];
 
+  /* 拍摄机位：偏离正侧面的角度。画面上的出手角是投影出来的，
+     机位越正对投篮者，横向位移压缩得越狠，算出来就越陡。
+     a = null 表示不确定，不做补偿（和以前的算法完全一致）。 */
+  var CAMS = [
+    { name: '不确定', a: null, tip: '选对机位能修正出手角：斜侧拍出来会偏陡' },
+    { name: '侧拍', a: 0, tip: '正侧拍，出手角最准' },
+    { name: '斜侧', a: 45, tip: '已按斜侧 45° 补偿，角度会比画面里看着平' },
+    { name: '正面', a: 80, tip: '正面机位横向位移几乎全丢，出手角测不出，建议换侧拍' }
+  ];
+
   function renderProb() {
     var card = $('probCard');
     if (!card) return;
@@ -130,7 +141,7 @@ window.BB = window.BB || {};
     var idx = state.cursor != null ? state.cursor : (state.activeShot != null ? state.activeShot : 0);
     var sh = state.shots[idx] || state.shots[0];
     var pr = BB.Zone.predict(sh.raw, { dist: state.dist });
-    if (BB.Arc3D) BB.Arc3D.update(sh, state.dist, idx);
+    if (BB.Arc3D) BB.Arc3D.update(sh, state.dist, idx, state.shots);
     var p = BB.Progress ? BB.Progress.apply(pr.p) : pr.p;
     var pct = Math.round(p * 100);
     var col = pct >= 58 ? '#16a34a' : pct >= 34 ? '#f97316' : '#dc2626';
@@ -172,9 +183,19 @@ window.BB = window.BB || {};
           (cal.n >= (BB.Progress ? BB.Progress.MIN_LEARN : 6)
             ? '<br>Brier ' + cal.brier.toFixed(2) + ' → ' + cal.brierCal.toFixed(2) + '（越小越准）' : '') +
         '</span>' +
+      '</div>' +
+      '<div class="prob-cam">' +
+        '<span class="lbl">拍摄机位</span>' +
+        '<div class="prob-dist">' + CAMS.map(function (c) {
+          var on = (state.camAngle === null && c.a === null) ||
+            (state.camAngle !== null && c.a !== null && Math.abs(state.camAngle - c.a) < 1);
+          return '<button class="' + (on ? 'on' : '') + '" data-a="' +
+            (c.a === null ? '' : c.a) + '">' + c.name + '</button>';
+        }).join('') + '</div>' +
+        '<span class="prob-calib">' + curCam().tip + '</span>' +
       '</div>';
 
-    card.querySelectorAll('.prob-dist button').forEach(function (btn) {
+    card.querySelectorAll('.prob-foot .prob-dist button').forEach(function (btn) {
       btn.addEventListener('click', function () {
         state.dist = +btn.dataset.d;
         if (BB.Arc2D) BB.Arc2D.setDist(state.dist);
@@ -182,6 +203,28 @@ window.BB = window.BB || {};
         repaintOverlay();
       });
     });
+
+    card.querySelectorAll('.prob-cam .prob-dist button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var raw = btn.dataset.a;
+        state.camAngle = raw === '' ? null : +raw;
+        /* 不用重跑姿态：每球存了候选角，换机位只是重新挑中位数 */
+        if (BB.PoseEngine && BB.PoseEngine.recalcAngles && state.exp) {
+          BB.PoseEngine.recalcAngles(state.exp, state.camAngle);
+        }
+        updateAll();
+        repaintOverlay();
+      });
+    });
+  }
+
+  function curCam() {
+    for (var i = 0; i < CAMS.length; i++) {
+      var c = CAMS[i];
+      if ((state.camAngle === null && c.a === null) ||
+        (state.camAngle !== null && c.a !== null && Math.abs(state.camAngle - c.a) < 1)) return c;
+    }
+    return CAMS[0];
   }
 
   /* ---------------- 出手记录表 ---------------- */
@@ -198,7 +241,9 @@ window.BB = window.BB || {};
         '<td class="c-idx">' + (i + 1) + '</td>' +
         '<td>' + num(s.raw.releaseAngle, 1, '<span class="u">°</span>') +
           (s.raw.releaseAngleSrc === 'pose'
-            ? '<sup class="est-mark" title="球没被识别出来，这个值是按出手瞬间手腕的运动方向估算的，不是球的实测轨迹">估</sup>'
+            ? (s.raw.angleUnreliable
+              ? '<sup class="est-mark warn" title="正面机位下横向位移几乎全丢，这个角度不可信，换成侧拍会准很多">?</sup>'
+              : '<sup class="est-mark" title="球没被识别出来，这个值是按出手瞬间手腕的运动方向估算的，不是球的实测轨迹">估</sup>')
             : '') + '</td>' +
         '<td class="hide-sm">' + num(s.raw.elbowAngle, 0, '<span class="u">°</span>') + '</td>' +
         '<td class="hide-sm">' + num(s.raw.releaseHeight, 0, '<span class="u">cm</span>') + '</td>' +
@@ -217,9 +262,16 @@ window.BB = window.BB || {};
       tr.addEventListener('click', function () {
         var idx = +tr.dataset.idx;
         state.activeShot = idx;
+        /* 游标是「播放位置附近那次」，此刻还停在旧球上。
+           不清掉它，右栏会继续显示上一次看的那一球。 */
+        state.cursor = null;
         BB.VideoPlayer.seek(state.shots[idx].tRel);
         renderTable();
         renderShotTools();
+        /* 换成这一球之后，概率卡和 3D 轨迹都得跟着换 ——
+           以前只改了高亮和工具条，右栏还停在上一次看的球上。 */
+        renderProb();
+        repaintOverlay();
       });
     });
     renderShotTools();
@@ -721,6 +773,8 @@ window.BB = window.BB || {};
     state.activeShot = null;
     /* 换了视频，机位就变了，标定必须作废 —— 沿用旧筐会把弧线画到错误的地方 */
     state.rim = null;
+    /* 机位同理：上一段素材是侧拍，这段是正面，沿用会把角度算错 */
+    state.camAngle = null;
     if (BB.Arc2D) BB.Arc2D.clear();
     if (state.url) { URL.revokeObjectURL(state.url); state.url = null; }
     $('stage').style.aspectRatio = '';
@@ -763,6 +817,8 @@ window.BB = window.BB || {};
       meta: X.meta,
       heightCm: height(),
       t: t,
+      /* 重算也要带上机位，否则改一次出手点，补偿就丢了 */
+      camAngle: state.camAngle,
       ballBlobs: X.ballBlobs
     });
     if (!r) {

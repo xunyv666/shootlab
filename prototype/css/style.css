@@ -384,6 +384,10 @@ td.c-score b { font-size: 13px; }
   color: var(--text-3); background: #f7f8fa; cursor: help;
   vertical-align: super;
 }
+/* 正面机位：值还在，但不能当测量用 */
+.est-mark.warn {
+  color: #b45309; background: #fff7ed; border-color: #fed7aa; font-weight: 700;
+}
 .tag-made, .tag-miss {
   font-size: 11px; padding: 2px 7px; border-radius: 5px; white-space: nowrap;
 }
@@ -437,6 +441,81 @@ td.c-score b { font-size: 13px; }
 /* ---------------- 图表 ---------------- */
 .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .chart-card .chart { height: 296px; padding: 4px 6px 6px; }
+/* 卡片里只有半屏宽，20 次出手会挤成一团 —— 右上角给一个放大入口 */
+.head-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.zoom-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 550;
+  padding: 3px 9px;
+  border-radius: 6px;
+  line-height: 1.6;
+  white-space: nowrap;
+  transition: all .15s ease;
+}
+.zoom-btn:hover { border-color: #d6dbe4; color: var(--text); background: var(--line-soft); }
+
+/* 放大层 */
+.chart-zoom {
+  position: fixed; inset: 0; z-index: 95;
+  background: rgba(16, 24, 40, .42);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+.chart-zoom[hidden] { display: none; }
+.chart-zoom.show { opacity: 1; }
+.cz-panel {
+  width: min(1240px, 100%);
+  height: min(760px, 92vh);
+  display: flex; flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px -12px rgba(16, 24, 40, .35);
+  overflow: hidden;
+  transform: translateY(8px) scale(.99);
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1);
+}
+.chart-zoom.show .cz-panel { transform: none; }
+.cz-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 15px 20px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.cz-head h3 { font-size: 15px; font-weight: 650; }
+.cz-head .sub { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+.cz-tools { display: flex; align-items: center; gap: 12px; }
+.cz-tabs {
+  display: inline-flex;
+  background: var(--line-soft);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.cz-tabs button {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all .15s ease;
+}
+.cz-tabs button:hover { color: var(--text-2); }
+.cz-tabs button.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(16,24,40,.1); }
+.cz-tabs button[hidden] { display: none; }
+.cz-body { flex: 1; min-height: 0; padding: 6px 12px 10px; }
+@media (max-width: 720px) {
+  .chart-zoom { padding: 10px; }
+  .cz-panel { height: min(680px, 94vh); border-radius: 12px; }
+  .cz-head { padding: 12px 14px 10px; }
+  .cz-body { padding: 4px 4px 8px; }
+}
 .chart-fail {
   height: 100%; display: grid; place-items: center;
   color: var(--text-3); font-size: 12px; text-align: center; padding: 20px;
@@ -1662,6 +1741,16 @@ td.c-score b { font-size: 13px; }
   text-align: right;
   line-height: 1.45;
 }
+/* 机位：整段视频的前提，和「这一球从哪投」分两行放，别混一起 */
+.prob-cam {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 16px 13px;
+}
+.prob-cam .lbl { font-size: 11.5px; color: var(--text-3); }
+.prob-cam .prob-calib { max-width: 58%; }
 
 .prob-lowconf {
   margin-left: 8px;
@@ -1692,6 +1781,32 @@ td.c-score b { font-size: 13px; }
 }
 
 /* ---------- 3D 出手轨迹 ---------- */
+/* 视角预设：拖了能转，但拖不回原来的角度，得给几个一键落点 */
+.arc-views {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--line-soft);
+  border-radius: 8px;
+  margin-left: auto;
+}
+.arc-views button {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 550;
+  padding: 3px 9px;
+  border-radius: 6px;
+  transition: all .15s ease;
+}
+.arc-views button:hover { color: var(--text-2); }
+.arc-views button.on {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, .1);
+}
+
 .arc-tag {
   margin-left: 6px;
   font-size: 10px;

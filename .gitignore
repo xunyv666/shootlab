@@ -10,8 +10,12 @@ __pycache__/
 /media/
 *.log
 
-# 本地下载的样例视频
+# 本地下载的样例视频（几十 MB，git add . 会误提交）
 /投篮预测样例.mp4
+/*_bilibili.mp4
+
+# 截图与临时产物（本地核对线上界面时生成）
+/.shots/
 
 # 系统
 .DS_Store

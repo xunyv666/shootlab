@@ -155,6 +155,50 @@ window.BB = window.BB || {};
     }).join('');
   }
 
+  /* ---------------- 本段小结 ----------------
+     综合评分、命中率、与球星差距的最大/最小项，一眼看懂这次分析。
+     命中率和强弱项直接用 Suggestion.analyze 的结果（含「球判不出就显示—」的处理）。
+     没数据时这张卡给拍摄要点。 */
+  function renderSummary() {
+    var el = $('sumCard');
+    if (!el) return;
+    var st = star();
+    if (!state.shots.length) {
+      el.innerHTML =
+        '<div class="card-head"><h2>拍出可分析的视频</h2><span class="sub">分析后这里生成本段小结</span></div>' +
+        '<div class="sum-tips">' +
+          '<div class="sum-tip"><b>侧拍</b><span>镜头对正侧面；正面/背面测不出出手角</span></div>' +
+          '<div class="sum-tip"><b>全身入镜</b><span>从脚到手都进画面，起跳和出手点才测得准</span></div>' +
+          '<div class="sum-tip"><b>10–20 秒</b><span>保留连续几次出手即可，太长拖慢分析</span></div>' +
+          '<div class="sum-tip"><b>光线充足</b><span>暗处人体识别容易丢帧</span></div>' +
+        '</div>';
+      return;
+    }
+    var res = state.res;
+    var starRadar = BB.metrics.radarOf(st.raw);
+    var score = BB.metrics.overall(res.avg.radar);
+    var starScore = BB.metrics.overall(starRadar);
+    var scCls = score >= 82 ? 'pos' : (score >= 70 ? 'mid' : 'neg');
+    /* gaps 按差距升序，strongest 是最强项；命中率未标记时为 null，显示 — */
+    var worst = res.gaps[0];
+    var best = res.strongest;
+    var markedN = state.shots.filter(function (s) { return s.made === true || s.made === false; }).length;
+    function gapTxt(g) { return (g > 0 ? '+' : '') + Math.round(g) + ' 分'; }
+    el.innerHTML =
+      '<div class="card-head"><h2>本段小结</h2><span class="sub">' +
+        state.shots.length + ' 次出手 · 对比 ' + st.name + '</span></div>' +
+      '<div class="sum-grid">' +
+        '<div class="sum-cell"><b class="' + scCls + '">' + score + '</b>' +
+          '<span>综合评分</span><i>' + st.name + ' ' + starScore + '</i></div>' +
+        '<div class="sum-cell"><b>' + (res.hasResult ? res.hitRate + '%' : '—') + '</b>' +
+          '<span>命中率</span><i>' + (res.hasResult ? res.made + '/' + markedN + ' 已标记' : '在视频里标记结果后统计') + '</i></div>' +
+        '<div class="sum-cell"><b class="dim-name">' + best.name + '</b>' +
+          '<span>最接近 ' + st.name + '</span><i class="pos">' + gapTxt(best.gap) + '</i></div>' +
+        '<div class="sum-cell"><b class="dim-name">' + worst.name + '</b>' +
+          '<span>差距最大</span><i class="neg">' + gapTxt(worst.gap) + '</i></div>' +
+      '</div>';
+  }
+
   /* ---------------- 进球概率 ---------------- */
   var DISTS = [
     { name: '篮下', d: 0.9 }, { name: '中距', d: 4.2 },
@@ -500,11 +544,13 @@ window.BB = window.BB || {};
     if (!state.shots.length) {
       if ($('probCard')) $('probCard').hidden = true;
       renderEmptyRight();
+      renderSummary();
       return;
     }
 
     state.res = BB.Suggestion.analyze(state.shots, star());
     renderMetrics();
+    renderSummary();
     renderProb();
     renderTable();
     renderMarks();

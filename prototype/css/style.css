@@ -411,28 +411,29 @@ td.c-score b { font-size: 13px; }
 .mid { color: var(--amber); }
 .neg { color: var(--red); }
 
-/* ---------------- 指标卡 ---------------- */
+/* ---------------- 指标卡 ----------------
+   3×2 布局：右栏只有这一排卡会显得空，两行大卡既填满又好读 */
 .metrics {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 .metric {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 12px 14px 14px;
+  padding: 16px 18px 18px;
   box-shadow: var(--shadow);
 }
 .m-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.m-name { font-size: 12px; color: var(--text-2); white-space: nowrap; }
-.m-delta { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.m-name { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+.m-delta { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .m-val {
-  font-size: 26px; font-weight: 660; letter-spacing: -.4px;
-  margin: 6px 0 3px;
+  font-size: 32px; font-weight: 660; letter-spacing: -.5px;
+  margin: 8px 0 4px;
   font-variant-numeric: tabular-nums;
 }
-.m-val small { font-size: 12px; font-weight: 500; color: var(--text-3); margin-left: 2px; }
+.m-val small { font-size: 13px; font-weight: 500; color: var(--text-3); margin-left: 2px; }
 .m-sub {
   font-size: 11.5px; color: var(--text-3);
   line-height: 1.45;
@@ -451,6 +452,37 @@ td.c-score b { font-size: 13px; }
   border-radius: 2px;
   transition: width .5s cubic-bezier(.2, .8, .2, 1);
 }
+
+/* ---------------- 本段小结 ----------------
+   分析视图右栏的第二块内容：一眼看懂这次分析；
+   没数据时给拍摄要点 —— 空态不放空看板 */
+.sum-tips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  padding: 14px 18px 18px;
+}
+.sum-tip { display: flex; flex-direction: column; gap: 2px; }
+.sum-tip b { font-size: 13px; color: var(--text); }
+.sum-tip span { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+.sum-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 4px 0 6px;
+}
+.sum-cell {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 14px 18px;
+  border-right: 1px solid var(--line-soft);
+}
+.sum-cell:last-child { border-right: none; }
+.sum-cell b {
+  font-size: 28px; font-weight: 660; letter-spacing: -.4px;
+  font-variant-numeric: tabular-nums;
+}
+.sum-cell b.dim-name { font-size: 15px; letter-spacing: 0; }
+.sum-cell span { font-size: 11.5px; color: var(--text-2); }
+.sum-cell i { font-style: normal; font-size: 11px; color: var(--text-3); }
 
 /* ---------------- 图表 ---------------- */
 .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -679,9 +711,6 @@ td.c-score b { font-size: 13px; }
 .modal-foot b { color: var(--text); }
 
 /* ---------------- 响应式 ---------------- */
-@media (max-width: 1280px) {
-  .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 @media (max-width: 1080px) {
   .layout { grid-template-columns: 1fr; }
   .col-left { position: static; }
@@ -1125,7 +1154,7 @@ td.c-score b { font-size: 13px; }
 
 /* ---------- 空数据占位 ---------- */
 .na { color: #aab3c0; letter-spacing: 0; }
-.metric.is-empty .m-val { font-size: 24px; }
+.metric.is-empty .m-val { font-size: 28px; }
 .empty-row {
   text-align: center;
   color: var(--text-3);
@@ -1784,6 +1813,10 @@ td.c-score b { font-size: 13px; }
   .drop-art { width: 78px; height: 54px; }
   .drop h3 { font-size: 14px; }
   .drop-steps { gap: 6px; font-size: 10px; }
+  /* 小结四格在窄屏改 2×2，边线跟着断位重排 */
+  .sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sum-cell:nth-child(2n) { border-right: none; }
+  .sum-cell:nth-child(n + 3) { border-top: 1px solid var(--line-soft); }
 }
 @media (max-width: 420px) {
   .drop { gap: 5px; padding: 12px; }

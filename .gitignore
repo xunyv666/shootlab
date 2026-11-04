@@ -1,6 +1,7 @@
 # 依赖
 node_modules/
 .bin/
+__pycache__/
 
 # 工具与工作区状态
 .workbuddy/

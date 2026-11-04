@@ -1,0 +1,54 @@
+# ShootLab 根工程配置：声明 tools/ 的 Python 依赖（供 uv sync 使用）+ ruff lint 配置。
+# tools/ 是扁平脚本目录，不是可安装的包；prototype/ 是纯静态站点，无需构建。
+[project]
+name = "shootlab"
+version = "1.0.0"
+description = "投篮动作分析：工具链依赖与 lint 配置（站点本体在 prototype/，无需构建）"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "mediapipe",
+    "pillow",
+    "matplotlib",
+]
+
+[tool.uv]
+# 没有可导入的包结构，只当依赖清单和工具配置用
+package = false
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# tools/ 里的临时性/探索性脚本不强制清零告警，但基本规范要过
+exclude = ["prototype", "data", "docs"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors（默认基础）
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes：未定义名、未用导入等
+    "B",   # bugbear：常见 bug 模式
+]
+# tools/ 是快速迭代的离线实验脚本，单行紧凑写法（分号、单行 if）是既有
+# 风格，重排只会制造 diff 噪音，不做强制：
+ignore = [
+    "E501",  # 行长上限（科学公式行不好拆）
+    "E401",  # import a, b 单行导入
+    "E701",  # if x: y 单行
+    "E702",  # a; b 分号连句
+    "E741",  # 短变量名 l/I
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "ball_track", "experiment", "extract_pose",
+    "segment_shots", "recompute_metrics",
+    "viz_pose", "_ball_viz", "_zoom_check",
+]

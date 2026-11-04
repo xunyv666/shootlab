@@ -14,6 +14,14 @@
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+# 站点图标：几乎不变，缓存一天够用，将来换图标也能较快生效
+/favicon.ico
+  Cache-Control: public, max-age=86400
+  Content-Type: image/x-icon
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+
 # 第三方库与姿态模型：体积大、极少变动
 /vendor/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=2592000

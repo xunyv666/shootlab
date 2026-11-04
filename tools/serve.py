@@ -22,6 +22,7 @@ mimetypes.add_type('text/javascript', '.mjs')
 mimetypes.add_type('application/octet-stream', '.task')
 mimetypes.add_type('video/webm', '.webm')
 mimetypes.add_type('video/mp4', '.mp4')
+mimetypes.add_type('image/x-icon', '.ico')
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8931
 ROOT = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 else os.getcwd()

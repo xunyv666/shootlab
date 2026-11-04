@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "playwright-core": "^1.64.1"
+  "name": "shootlab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "浏览器里跑的投篮动作分析工具（纯静态站点 + Python 离线工具）",
+  "license": "MIT",
+  "scripts": {
+    "serve": "python tools/serve.py 8931 prototype",
+    "preview": "python tools/serve.py 8931 prototype"
   }
 }

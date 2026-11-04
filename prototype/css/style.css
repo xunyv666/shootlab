@@ -731,13 +731,13 @@ td.c-score b { font-size: 13px; }
 .quote-box {
   margin-top: 14px;
   padding: 11px 13px 12px;
-  background: var(--blue-soft);
-  border-left: 3px solid var(--blue);
+  background: var(--orange-soft);
+  border-left: 3px solid var(--orange);
   border-radius: 0 9px 9px 0;
   cursor: pointer;
   transition: background .15s ease, transform .15s ease;
 }
-.quote-box:hover { background: #e5eeff; transform: translateX(1px); }
+.quote-box:hover { background: #ffe9d6; transform: translateX(1px); }
 
 .q-head {
   display: flex; align-items: center; gap: 8px;
@@ -745,7 +745,7 @@ td.c-score b { font-size: 13px; }
 }
 .q-badge {
   font-size: 10px; font-weight: 650; letter-spacing: .3px;
-  color: var(--blue);
+  color: #c2410c;
   background: #fff;
   border-radius: 5px;
   padding: 2px 6px;
@@ -754,55 +754,55 @@ td.c-score b { font-size: 13px; }
   max-width: 62%;
 }
 .q-time {
-  font-size: 10.5px; color: var(--blue); font-variant-numeric: tabular-nums;
+  font-size: 10.5px; color: #c2410c; font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 .q-play {
   margin-left: auto;
   font-size: 10.5px; font-weight: 600; color: #fff;
-  background: var(--blue);
+  background: var(--orange);
   border-radius: 5px;
   padding: 2px 7px;
   white-space: nowrap;
 }
-.quote-box:hover .q-play { background: #1d4ed8; }
+.quote-box:hover .q-play { background: #ea580c; }
 
 .q-zh {
-  font-size: 13px; line-height: 1.6; color: #14305c;
+  font-size: 13px; line-height: 1.6; color: #7c2d12;
   font-weight: 550;
 }
 .q-en {
-  font-size: 11px; line-height: 1.5; color: #6b7f9e;
+  font-size: 11px; line-height: 1.5; color: #8b94a3;
   font-style: italic; margin-top: 3px;
 }
 .q-note {
-  font-size: 10.5px; line-height: 1.55; color: #7b8aa2;
+  font-size: 10.5px; line-height: 1.55; color: #8b94a3;
   margin-top: 6px; padding-top: 6px;
-  border-top: 1px dashed rgba(37, 99, 235, .18);
+  border-top: 1px dashed rgba(249, 115, 22, .25);
 }
 
 /* 弹窗里的紧凑版：一行小字，不抢主内容 */
 .adv-quote {
   margin-top: 7px;
   font-size: 11px;
-  color: #4a628a;
-  background: var(--blue-soft);
+  color: #7c2d12;
+  background: var(--orange-soft);
   border-radius: 6px;
   padding: 5px 8px;
   cursor: pointer;
   line-height: 1.5;
   display: flex; align-items: baseline; gap: 5px;
 }
-.adv-quote:hover { background: #e5eeff; }
+.adv-quote:hover { background: #ffe9d6; }
 .adv-quote .q-mark {
   font-size: 9.5px; font-weight: 700; color: #fff;
-  background: var(--blue);
+  background: var(--orange);
   border-radius: 3px; padding: 1px 4px;
   white-space: nowrap; flex: none;
 }
 .adv-quote .q-link {
   margin-left: auto; flex: none;
-  color: var(--blue); font-weight: 600; white-space: nowrap;
+  color: #c2410c; font-weight: 600; white-space: nowrap;
 }
 
 /* ---------------- 原话回看层 ---------------- */
@@ -862,7 +862,7 @@ td.c-score b { font-size: 13px; }
   background: #fbfcfd;
 }
 .ql-quote {
-  font-size: 13px; line-height: 1.65; color: #14305c;
+  font-size: 13px; line-height: 1.65; color: #7c2d12;
 }
 .ql-credit { font-size: 10.5px; color: var(--text-3); margin-top: 5px; }
 
@@ -872,8 +872,8 @@ td.c-score b { font-size: 13px; }
   .adv-quote { font-size: 10.5px; }
 }
 .ql-credit a {
-  color: var(--blue); text-decoration: none; margin-left: 10px;
-  border-bottom: 1px dashed rgba(37, 99, 235, .5);
+  color: #c2410c; text-decoration: none; margin-left: 10px;
+  border-bottom: 1px dashed rgba(249, 115, 22, .5);
 }
 .ql-credit a:hover { border-bottom-style: solid; }
 .ql-video-wrap-tip {

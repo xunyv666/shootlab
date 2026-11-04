@@ -1,0 +1,41 @@
+name: 部署到 Cloudflare Pages
+
+# 推到 main 就自动上线，谁合并谁生效，不再依赖某台机器手动跑 wrangler。
+#
+# 需要的仓库 Secrets（Settings → Secrets and variables → Actions）：
+#   CLOUDFLARE_API_TOKEN   Cloudflare API Token，权限 = Account / Cloudflare Pages / Edit
+#   CLOUDFLARE_ACCOUNT_ID  1eb40df645d39a7474d57d502d427c0f
+#
+# 两个 Pages 项目同时更新：shootlab-pro（对外分享用）和 shootlab（旧地址，保持内容一致）。
+# 如果以后确定弃用旧地址，把最后那一步删掉即可。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时刻只允许一个部署，避免两个人几乎同时合并时互相覆盖
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取代码
+        uses: actions/checkout@v4
+
+      - name: 部署到 shootlab-pro（对外地址）
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy prototype --project-name shootlab-pro --branch main
+
+      - name: 部署到 shootlab（旧地址，保持同步）
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy prototype --project-name shootlab --branch main

@@ -6,15 +6,17 @@ name: 部署到 Cloudflare Pages
 #   CLOUDFLARE_API_TOKEN   Cloudflare API Token，权限 = Account / Cloudflare Pages / Edit
 #   CLOUDFLARE_ACCOUNT_ID  1eb40df645d39a7474d57d502d427c0f
 #
+# 故意不用 cloudflare/wrangler-action：那个 action 会自己猜包管理器、自己装 wrangler，
+# 报错信息又藏在里面，排查很费劲。这里直接用 npx，失败时原始报错原样打在日志里。
+#
 # 两个 Pages 项目同时更新：shootlab-pro（对外分享用）和 shootlab（旧地址，保持内容一致）。
-# 如果以后确定弃用旧地址，把最后那一步删掉即可。
+# 如果以后确定弃用旧地址，把最后那个部署步骤删掉即可。
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# 同一时刻只允许一个部署，避免两个人几乎同时合并时互相覆盖
 concurrency:
   group: pages-deploy
   cancel-in-progress: true
@@ -22,20 +24,29 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - name: 取代码
         uses: actions/checkout@v4
 
+      - name: 检查密钥是否已经配好
+        run: |
+          missing=0
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::仓库缺少 Secret：CLOUDFLARE_API_TOKEN"
+            missing=1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::仓库缺少 Secret：CLOUDFLARE_ACCOUNT_ID"
+            missing=1
+          fi
+          [ "$missing" = "0" ] || exit 1
+          echo "两个 Secret 都在（长度 ${#CLOUDFLARE_API_TOKEN} / ${#CLOUDFLARE_ACCOUNT_ID}）"
+
       - name: 部署到 shootlab-pro（对外地址）
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy prototype --project-name shootlab-pro --branch main
+        run: npx --yes wrangler@4 pages deploy prototype --project-name shootlab-pro --branch main
 
       - name: 部署到 shootlab（旧地址，保持同步）
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy prototype --project-name shootlab --branch main
+        run: npx --yes wrangler@4 pages deploy prototype --project-name shootlab --branch main

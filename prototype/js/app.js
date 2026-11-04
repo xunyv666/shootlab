@@ -30,9 +30,20 @@ window.BB = window.BB || {};
      切换只加/去 .view-off 类，不碰卡片自己的 hidden ——
      prob/arc 卡的显隐由数据有无决定，归 updateAll 管。 */
   var VIEWS = ['analyze', 'compare', 'zone'];
+  /* 一级导航：运动项目。跳绳/俯卧撑目前只有占位页 */
+  var PROJECTS = ['basketball', 'rope', 'pushup'];
+
+  function currentHash() {
+    return (location.hash || '').replace(/^#/, '');
+  }
+
+  function currentProject() {
+    var h = currentHash();
+    return (h === 'rope' || h === 'pushup') ? h : 'basketball';
+  }
 
   function currentHashView() {
-    var h = (location.hash || '').replace(/^#/, '');
+    var h = currentHash();
     return VIEWS.indexOf(h) >= 0 ? h : 'analyze';
   }
 
@@ -78,6 +89,48 @@ window.BB = window.BB || {};
         BB.Charts.resize();
         updateAll();            // 把当前数据喂给刚初始化的图表
       }
+    }
+  }
+
+  /* ---------------- 项目切换 ----------------
+     一级导航只控制「哪一块可见」，二级视图仍由 setView 管。
+     篮球专属的球星对比、出手计数、上传按钮、视图 tab 在别的项目下要收起来，
+     否则跳绳页顶上挂着一排球星 chip，语义就乱了。 */
+  function applyRoute() {
+    var proj = currentProject();
+    state.project = proj;
+
+    var panes = { basketball: $('bbPane'), rope: $('ropePane'), pushup: $('pushupPane') };
+    Object.keys(panes).forEach(function (k) {
+      if (panes[k]) panes[k].hidden = (k !== proj);
+    });
+
+    document.querySelectorAll('.project-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-project') === proj);
+    });
+
+    var isBB = proj === 'basketball';
+    ['starArea', 'topActions', 'viewTabs'].forEach(function (id) {
+      var el = $(id);
+      if (el) el.hidden = !isBB;
+    });
+    /* 底部模糊垫层是给胶囊导航打底的，导航收起来就一起收，
+       否则跳绳页底部会挂一条空的毛玻璃带 */
+    var blur = document.querySelector('.bottom-blur');
+    if (blur) blur.hidden = !isBB;
+
+    if (isBB) {
+      setView(currentHashView());
+      /* 从别的项目切回来时，篮球面板是这一帧才恢复显示的，
+         此时量容器拿到的是 0，必须等下一帧重排完再 resize */
+      if (chartsInited && BB.Charts) {
+        requestAnimationFrame(function () { BB.Charts.resize(); });
+      }
+    } else {
+      /* 离开篮球就把视频停住，别在看不见的地方继续播 */
+      var v = BB.VideoPlayer && BB.VideoPlayer.state.video;
+      if (v && !v.paused) v.pause();
+      window.scrollTo(0, 0);
     }
   }
 
@@ -1288,7 +1341,19 @@ window.BB = window.BB || {};
         document.fonts.ready.then(function () { moveInk(false); });
       }
     }
-    window.addEventListener('hashchange', function () { setView(currentHashView()); });
+
+    /* 项目导航：跳绳/俯卧撑是占位页，切过去只看外观，不碰任何分析流程 */
+    document.querySelectorAll('.project-tab').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-project');
+        if (location.hash !== '#' + p) location.hash = p;
+        else applyRoute();
+      });
+    });
+
+    /* hash 同时承载「项目」与「视图」两层：#rope 是项目，#compare 是视图。
+       applyRoute 内部会按需调用 setView，所以只挂这一个监听即可。 */
+    window.addEventListener('hashchange', applyRoute);
 
     document.addEventListener('keydown', function (e) {
       if (e.target.tagName === 'INPUT') return;
@@ -1322,8 +1387,8 @@ window.BB = window.BB || {};
       if (BB.Ghost && BB.Ghost.render) BB.Ghost.render(ctx, box, f, side);
       if (BB.Arc2D) BB.Arc2D.render(ctx, box, t);
     });
-    /* hash 决定首屏视图；落在 compare 时会在这里完成图表的懒初始化 */
-    setView(currentHashView());
+    /* hash 决定首屏：项目 → 视图，落在 compare 时会在这里完成图表懒初始化 */
+    applyRoute();
     updateAll();
   }
 

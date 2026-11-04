@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ShootLab · 投篮动作分析与球星对比</title>
+<title>运动分析 · 篮球 / 跳绳 / 俯卧撑</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,29 +11,36 @@
 <header class="topbar">
   <div class="brand">
     <div class="logo">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
-        <circle cx="12" cy="12" r="9"></circle>
-        <path d="M3 12h18M12 3v18M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"></path>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="5" r="2.2"></circle>
+        <path d="M12 7.4V14M12 10.2 L7.6 13.2M12 10.2 L16.4 13.2M12 14 L9.2 19M12 14 L14.8 19"></path>
       </svg>
     </div>
     <div class="brand-text">
-      <h1>ShootLab 投篮动作分析</h1>
-      <p>指标按身高归一化 · 建议附库里大师课原话出处</p>
+      <h1>运动分析</h1>
+      <p>篮球投篮 · 跳绳计数 · 俯卧撑，动作数据化</p>
     </div>
   </div>
 
-  <div class="compare">
+  <div class="compare" id="starArea">
     <span class="compare-label">对比球星</span>
     <div class="chips" id="starChips"></div>
   </div>
 
-  <div class="topbar-right">
+  <div class="topbar-right" id="topActions">
     <div class="stat-pill">已记录 <b id="shotCount">0</b> 次出手</div>
     <label class="btn btn-primary" for="fileInput">分析我的视频</label>
   </div>
 </header>
 
-<main class="layout">
+<!-- 一级导航：运动项目。跳绳 / 俯卧撑先占位，功能未实现 -->
+<nav class="projects" id="projectTabs" aria-label="运动项目">
+  <button class="project-tab active" data-project="basketball">篮球投篮</button>
+  <button class="project-tab" data-project="rope">跳绳计数</button>
+  <button class="project-tab" data-project="pushup">俯卧撑</button>
+</nav>
+
+<main class="layout" id="bbPane">
 
   <!-- ================= 左列 ================= -->
   <section class="col col-left">
@@ -245,6 +252,66 @@
   <button class="view-tab" data-view="zone">点位 · 概率</button>
   <span class="view-ink no-anim" id="viewInk" aria-hidden="true"></span>
 </nav>
+
+<!-- ===== 跳绳：占位页（功能未实现，先立结构） ===== -->
+<section class="soon" id="ropePane" hidden>
+  <div class="soon-card">
+    <div class="soon-icon">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+        <circle cx="6" cy="4.2" r="1.7"></circle>
+        <circle cx="18" cy="4.2" r="1.7"></circle>
+        <path d="M6 5.9v7.1a6 6 0 0 0 12 0V5.9"></path>
+      </svg>
+    </div>
+    <div class="soon-head">
+      <h2>跳绳计数</h2>
+      <span class="soon-tag">开发中</span>
+    </div>
+    <p class="soon-desc">
+      用同一套姿态识别，把每一次起跳切出来计数。不只是数个数，还要看节奏稳不稳。
+    </p>
+    <ul class="soon-list">
+      <li><b>总次数 · 每分钟次数</b><span>按起跳周期识别，带最小间隔约束防重复计数</span></li>
+      <li><b>单次跳跃高度</b><span>由脚踝与髋部抬升换算，按身高归一化</span></li>
+      <li><b>节奏一致性</b><span>统计每次间隔的波动，跳得乱会看得出来</span></li>
+      <li><b>断绳识别</b><span>起跳缺失或幅度骤降时单独标出</span></li>
+    </ul>
+    <p class="soon-tip">
+      <b>拍摄要求</b>：固定机位，全身入镜，人物占画面高度一半以上。跳绳离地 3–10cm，
+      远景里只有几个像素，测不出来。
+    </p>
+  </div>
+</section>
+
+<!-- ===== 俯卧撑：占位页（功能未实现，先立结构） ===== -->
+<section class="soon" id="pushupPane" hidden>
+  <div class="soon-card">
+    <div class="soon-icon">
+      <svg viewBox="0 0 32 20" width="38" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5.4" cy="6.6" r="2.4"></circle>
+        <path d="M8 7.8 L26.5 10"></path>
+        <path d="M10.6 8.1 V16.2 M24.2 9.9 V16.2"></path>
+        <path d="M2.5 16.5 H29.5" stroke-width="1.4" opacity="0.5"></path>
+      </svg>
+    </div>
+    <div class="soon-head">
+      <h2>俯卧撑</h2>
+      <span class="soon-tag">开发中</span>
+    </div>
+    <p class="soon-desc">
+      数个数只是及格线。真正要看的是每一次下去够不够深、身体有没有塌腰。
+    </p>
+    <ul class="soon-list">
+      <li><b>总次数 · 每组节奏</b><span>按肘关节屈伸周期识别，区分快撑与慢撑</span></li>
+      <li><b>下放深度</b><span>用肘角最小值判断，没下去的不算标准</span></li>
+      <li><b>躯干是否成一条线</b><span>肩—髋—踝角度，塌腰或撅臀都会被标出来</span></li>
+      <li><b>标准度评分</b><span>深度、躯干、节奏三项加权</span></li>
+    </ul>
+    <p class="soon-tip">
+      <b>拍摄要求</b>：侧面机位，要能拍到肩到脚整条线。正对着拍看不到塌腰，也量不出深度。
+    </p>
+  </div>
+</section>
 
 <div class="modal" id="modal" hidden></div>
 

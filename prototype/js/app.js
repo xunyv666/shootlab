@@ -45,8 +45,10 @@ window.BB = window.BB || {};
     var cur = nav.querySelector('.view-tab.active');
     if (!cur) return;
     if (instant) ink.classList.add('no-anim');
-    ink.style.width = cur.offsetWidth + 'px';
-    ink.style.transform = 'translateX(' + cur.offsetLeft + 'px)';
+    /* 只衬住文字，不把按钮内边距也算进去：宽度取文字近似宽，水平居中 */
+    var w = Math.max(20, cur.offsetWidth - 36);
+    ink.style.width = w + 'px';
+    ink.style.transform = 'translateX(' + (cur.offsetLeft + (cur.offsetWidth - w) / 2) + 'px)';
     /* 下一帧恢复过渡：首帧定位（HTML 带 no-anim）不产生从 0 飞过来的动画 */
     requestAnimationFrame(function () {
       requestAnimationFrame(function () { ink.classList.remove('no-anim'); });

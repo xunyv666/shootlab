@@ -1191,7 +1191,7 @@ td.c-score b { font-size: 13px; }
   letter-spacing: .2px;
   color: #fff;
 }
-.drop-sub { font-size: 11.5px; color: rgba(255, 255, 255, .52); }
+.drop-sub { font-size: 11.5px; color: rgba(255, 255, 255, .52); line-height: 1.55; }
 .drop-steps {
   display: flex;
   align-items: center;

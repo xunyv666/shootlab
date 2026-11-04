@@ -14,12 +14,13 @@
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
-# 第三方库与姿态模型：体积大、极少变动
+# 第三方库：体积大、极少变动。运行时跟版本走，改版本要清缓存，所以给 30 天
 /vendor/*
-  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=2592000
 
+# 姿态模型是固定权重，内容永不变化：直接缓存一年，下过一次就基本不再下
 /models/*
-  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+  Cache-Control: public, max-age=31536000, immutable
 
 # 示例媒体
 /media/*

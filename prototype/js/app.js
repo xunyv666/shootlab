@@ -1079,11 +1079,46 @@ window.BB = window.BB || {};
       }
       hint.hidden = false;
       hint.innerHTML = s.text + ' · <b>' + Math.round(overall * 100) + '%</b>'
-        + '<br>首次使用需下载约 19MB 识别引擎，之后缓存在本机，打开即用';
+        + '<br>首次分析需下载约 19MB 识别引擎，之后存在本机，下次直接可用';
     });
 
-    /* 页面一打开就预热：把等待藏进用户阅读页面的时间里 */
-    if (E.preload) E.preload();
+    /* ---------------- 引擎按需加载 ----------------
+       以前这里是无条件预热：打开首页就先吃掉约 19MB（模型 9.4 + 运行时 9.4）。
+       很多人只是进来看看，这一趟流量完全是白烧的。
+       现在默认什么都不下，只在用户露出「确实要用」的迹象时才去拉：
+         · 桌面端鼠标停在空态区域上 250ms（划过不算，大概率是要点）
+         · 点「选一个视频试试」的瞬间（系统选文件框已经弹出，正好填这段空档）
+       省流量模式、2G/3G 下不预取，等真正开始分析时再下（功能不受影响）。
+       下过一次就留在本机，第二次打开不再重复下载。 */
+    if (E && E.preload) {
+      var prefetched = false;
+      var prefetch = function () {
+        if (prefetched) return;
+        prefetched = true;
+        E.preload();
+      };
+
+      var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      var cheapNet = !conn || (!conn.saveData && !/^(slow-2g|2g|3g)$/.test(conn.effectiveType || ''));
+
+      if (cheapNet) {
+        var dropEl = $('drop');
+        var canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+        if (dropEl && canHover) {
+          var hoverTimer = null;
+          dropEl.addEventListener('pointerenter', function () {
+            hoverTimer = setTimeout(prefetch, 250);
+          });
+          dropEl.addEventListener('pointerleave', function () {
+            clearTimeout(hoverTimer);
+          });
+        }
+      }
+
+      /* 点了就一定要用，不再犹豫；文件框弹着的时候引擎就先下去 */
+      var fileEl = $('fileInput');
+      if (fileEl) fileEl.addEventListener('click', prefetch);
+    }
   }
 
   function startAnalyze(file) {

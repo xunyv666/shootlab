@@ -1,0 +1,9 @@
+# 谁改这些文件，PR 必须由所有者批准（需要配合 Settings → Rules 里的
+# 「Require review from Code Owners」才生效，只有这个文件不起作用）
+
+# CI 与部署工作流：这里能改就意味着能把仓库里的 Secret 拿去用，必须把关
+/.github/           @xunyv666
+
+# 依赖声明：多插一个包可能拖慢 CI，也可能是投毒入口
+/pyproject.toml     @xunyv666
+/package.json       @xunyv666

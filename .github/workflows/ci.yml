@@ -1,0 +1,39 @@
+name: CI
+
+# 最小检查：Python 脚本过 ruff + 能编译，JS 过语法检查。
+# 站点本身无构建步骤，部署由 deploy.yml 负责，这里只挡「明显坏了」的提交。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取代码
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 装 ruff
+        run: pip install ruff
+
+      - name: ruff 检查 tools/
+        run: ruff check tools
+
+      - name: Python 脚本可编译
+        run: python -m compileall tools
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: JS 语法检查
+        run: |
+          for f in prototype/js/*.js; do
+            node --check "$f"
+          done

@@ -604,7 +604,7 @@ td.c-score b { font-size: 13px; }
 .foot-left b { color: var(--text); font-weight: 620; }
 .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .dot.good { background: var(--green); }
-.dot.blue { background: var(--blue); }
+.dot.blue { background: var(--orange); }
 .dot.gray { background: #cbd5e1; }
 .sep { width: 1px; height: 11px; background: var(--line); margin: 0 3px; }
 
@@ -891,11 +891,11 @@ td.c-score b { font-size: 13px; }
  * 视觉上要和「模拟数据」有明显区分，否则观众分不清哪个是真的
  * ============================================================ */
 .btn-exp {
-  background: #0f766e;
+  background: var(--orange);
   color: #fff;
-  border: 1px solid #0f766e;
+  border: 1px solid var(--orange);
 }
-.btn-exp:hover { background: #115e59; border-color: #115e59; }
+.btn-exp:hover { background: #ea580c; border-color: #ea580c; }
 
 .exp-bar {
   display: flex;
@@ -1550,21 +1550,22 @@ td.c-score b { font-size: 13px; }
 
 /* 表格选中行 + 播放位置高亮 */
 .shot-table tr.active td { background: #fff7ef; }
-.shot-table tr.cursor td { background: #eef3ff; }
+.shot-table tr.cursor td { background: #fff6ec; }
 .shot-table tr.cursor.active td { background: #fff1e3; }
 .shot-table tbody tr { cursor: pointer; }
 
 
-/* ---------------- 标准火柴人模板 ---------------- */
+/* ---------------- 标准火柴人模板 ----------------
+   中性灰底，开启态用主色橙 —— 绿色留给「命中」语义，不再当开关色 */
 .btn-ghost {
-  border: 1px solid #cfe8da;
-  background: #f3fbf6;
-  color: #15803d;
+  border: 1px solid #d6dbe4;
+  background: #f7f8fa;
+  color: var(--text-2);
 }
-.btn-ghost:hover { background: #e8f7ee; border-color: #a9dbbd; }
+.btn-ghost:hover { background: #eef1f6; border-color: #c3cad6; }
 .btn-ghost.on {
-  background: #16a34a;
-  border-color: #16a34a;
+  background: var(--orange);
+  border-color: var(--orange);
   color: #fff;
   box-shadow: 0 2px 8px -2px rgba(22, 163, 74, .5);
 }

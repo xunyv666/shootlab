@@ -11,7 +11,8 @@
 
 用法: python segment_shots.py <pose.json> [--min-gap 0.8] [--out shots.json]
 """
-import json, sys, argparse
+import json
+import argparse
 import numpy as np
 
 
@@ -68,22 +69,23 @@ def segment(path, min_gap=0.8, peak_thr=1.15, pre=1.2, post=0.4):
         seg = {k: v[mask] for k, v in S.items()}
         tseg = t[mask]
 
-        def at_peak(k):
+        # 用默认参数把循环变量绑定进闭包，避免晚绑定踩坑
+        def at_peak(k, seg=seg, tseg=tseg, tp=tp):
             v = seg[k]
             if np.isnan(v).all():
                 return None
             j = int(np.nanargmin(np.abs(tseg - tp)))
             return None if np.isnan(v[j]) else float(v[j])
 
-        def nanmin(k):
+        def nanmin(k, seg=seg):
             v = seg[k]
             return None if np.isnan(v).all() else float(np.nanmin(v))
 
-        def nanmax(k):
+        def nanmax(k, seg=seg):
             v = seg[k]
             return None if np.isnan(v).all() else float(np.nanmax(v))
 
-        def nanmean(k):
+        def nanmean(k, seg=seg):
             v = seg[k]
             return None if np.isnan(v).all() else float(np.nanmean(v))
 

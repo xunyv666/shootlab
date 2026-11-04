@@ -17,8 +17,12 @@
 }
 坐标 x,y 已归一化到 [0,1]，y 向下。
 """
-import sys, os, json, math, argparse, time
-import numpy as np
+import sys
+import os
+import json
+import math
+import argparse
+import time
 import cv2
 
 from mediapipe.tasks import python as mp_python
@@ -160,7 +164,8 @@ def main():
     try:
         model_path.encode('ascii')
     except UnicodeEncodeError:
-        import tempfile, shutil
+        import tempfile
+        import shutil
         safe_dir = os.path.join(tempfile.gettempdir(), 'bp_models')
         os.makedirs(safe_dir, exist_ok=True)
         safe = os.path.join(safe_dir, os.path.basename(model_path))

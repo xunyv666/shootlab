@@ -3,7 +3,8 @@
 """把已提取的关键点画回视频帧，用于目视校验检测质量。
 用法: python viz_pose.py <video> <pose.json> <out.jpg> [--at 787.0,788.0]
 """
-import sys, json, argparse
+import json
+import argparse
 import cv2
 import numpy as np
 
@@ -24,7 +25,7 @@ def main():
     d = json.load(open(args.pose, encoding='utf-8'))
     d.setdefault('frames', d.get('frames'))
     cap = cv2.VideoCapture(args.video)
-    fps = cap.get(cv2.CAP_PROP_FPS) or 30
+    cap.get(cv2.CAP_PROP_FPS) or 30
     W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)); H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     if args.at:
         want = [float(x) for x in args.at.split(',')]

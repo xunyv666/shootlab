@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """生成「库里 vs 普通球友」出手对比卡"""
-import json, os
+import json
 import numpy as np
 import cv2
 from PIL import Image, ImageDraw, ImageFont
@@ -61,7 +61,7 @@ def stats(shots_path, drop_bad=True):
     }
 
 
-curry = stats('media/shots_curry_610.json') 
+curry = stats('media/shots_curry_610.json')
 curry2 = stats('media/shots_curry_357.json')
 am = stats('media/shots_am.json')
 

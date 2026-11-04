@@ -20,7 +20,10 @@
 用法:
   python experiment.py media/pose_booker.json --seg 0.6 5.4 --label booker_shot1
 """
-import json, os, sys, argparse
+import json
+import os
+import sys
+import argparse
 import numpy as np
 
 L_SH, R_SH = 11, 12
@@ -168,7 +171,7 @@ def shot_metrics(pi, t, C, wk, stand, ground, pre=2.2, post=1.2):
     tp = t[pi]
     m = (t >= tp - pre) & (t <= tp + post)
     ts = t[m]
-    idx = np.flatnonzero(m)
+    np.flatnonzero(m)
     seg = {k: C[k][m] for k in C}
     knee = seg['knee']
     if np.isnan(knee).all():
@@ -183,7 +186,7 @@ def shot_metrics(pi, t, C, wk, stand, ground, pre=2.2, post=1.2):
 
     dt = float(np.median(np.diff(t))) if len(t) > 1 else 0.04
     after = ts >= tp
-    follow = float(after.sum() * dt) if after.any() else 0.0
+    float(after.sum() * dt) if after.any() else 0.0
     # 随球保持：出手后手腕仍在峰值 0.85 倍以上的时长
     pk = np.nanmax(seg['wrist_y'])
     hold = 0.0

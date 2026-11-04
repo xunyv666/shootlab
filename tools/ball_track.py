@@ -18,7 +18,8 @@
   python ball_track.py <video> --t 190.6 --wx 0.36 --wy 0.28
   python ball_track.py <video> --shots media/shots.json --pose media/pose.json
 """
-import json, sys, argparse
+import json
+import argparse
 import numpy as np
 import cv2
 

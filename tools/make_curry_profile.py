@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """生成库里标准姿势档案图：关键帧 + 骨骼 + 指标标注"""
-import json, os, sys
+import json
+import os
 import cv2
-import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 VIDEO = 'media/curry_p2_360p.mp4'

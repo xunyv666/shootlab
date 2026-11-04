@@ -11,7 +11,10 @@
   python build_experiment.py --video media/xutao_case_720p.mp4 --pose media/pose_xt_188.json \
       --seg 188.6 192.4 --release 190.62 --stand-cm 148 --height-cm 180
 """
-import json, os, sys, argparse
+import json
+import os
+import sys
+import argparse
 import numpy as np
 import cv2
 

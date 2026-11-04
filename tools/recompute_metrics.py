@@ -3,7 +3,10 @@
 """从已提取的 pose json 重新计算指标（不重跑推理），用于算法迭代。
 用法: python recompute_metrics.py <in.json> <out.json> [--side r|l]
 """
-import sys, os, json, argparse
+import sys
+import os
+import json
+import argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from extract_pose import metrics_for
 

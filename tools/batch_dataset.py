@@ -10,7 +10,10 @@
   python batch_dataset.py --case "许涛矫正" --video ../media/xutao_case_720p.mp4 \
       --pose ../media/pose_xt_188.json --seg 188 207
 """
-import argparse, json, os, sys
+import argparse
+import json
+import os
+import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

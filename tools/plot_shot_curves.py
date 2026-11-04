@@ -22,7 +22,7 @@ SEGS = [('media/pose_shot_610.json', '① 10:10 立定出手（手举过顶）')
 fig, axes = plt.subplots(2, 1, figsize=(11, 7.2), dpi=130)
 fig.patch.set_facecolor('#12141a')
 
-for ax, (path, title) in zip(axes, SEGS):
+for ax, (path, title) in zip(axes, SEGS, strict=False):
     d = json.load(open(path, encoding='utf-8'))
     fr = [f for f in d['frames'] if f['pts']]
     t = [f['t'] - fr[0]['t'] for f in fr]

@@ -238,7 +238,6 @@ button { font-family: inherit; cursor: pointer; }
   35%  { transform: translateX(-50%) scale(1.05); }
   100% { transform: translateX(-50%) scale(1); }
 }
-}
 .view-tab {
   appearance: none;
   border: none;

@@ -17,12 +17,51 @@ window.BB = window.BB || {};
     dist: 4.6,           // 这一球从多远投的（米）：概率模型的前提
     camAngle: null,      // 拍摄机位偏离正侧面的角度；null = 不确定，不补偿
     rim: null,           // 篮筐位置（视频归一化坐标）：画 2D 轨迹要用
+    view: 'analyze',     // 当前视图：analyze / compare / zone（hash 路由）
     lastRender: -1
   };
+  var chartsInited = false;   // ECharts 首进对比页才初始化（vendor 库 ~1MB）
 
   function star() { return D.STARS[state.starId]; }
 
-  /* 缺失值统一显示成「—」：识别不到的东西宁可留空，也不要编一个数 */
+  /* ---------------- 视图路由（hash） ----------------
+     三个视图共用根路径，hash 即导航：#analyze / #compare / #zone。
+     hash 在任何部署子路径（含 file://）都能用，不依赖服务端。
+     切换只加/去 .view-off 类，不碰卡片自己的 hidden ——
+     prob/arc 卡的显隐由数据有无决定，归 updateAll 管。 */
+  var VIEWS = ['analyze', 'compare', 'zone'];
+
+  function currentHashView() {
+    var h = (location.hash || '').replace(/^#/, '');
+    return VIEWS.indexOf(h) >= 0 ? h : 'analyze';
+  }
+
+  function setView(name) {
+    if (VIEWS.indexOf(name) < 0) name = 'analyze';
+    state.view = name;
+    document.querySelectorAll('main [data-view]').forEach(function (el) {
+      el.classList.toggle('view-off', el.getAttribute('data-view').split(' ').indexOf(name) < 0);
+    });
+    document.querySelectorAll('.view-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === name);
+    });
+    /* 离开分析页先停视频 */
+    if (name !== 'analyze') {
+      var v = BB.VideoPlayer.state.video;
+      if (v && !v.paused) v.pause();
+    }
+    /* 图表只初始化一次，且是在第一次可见时（量过的容器尺寸才对） */
+    if (name === 'compare' && !chartsInited) {
+      var ok = BB.Charts.init();
+      chartsInited = true;      // init 失败（vendor 缺失）时再进也会由 init 内部给失败提示，不重复绑定
+      if (ok) {
+        BB.Charts.resize();
+        updateAll();            // 把当前数据喂给刚初始化的图表
+      }
+    }
+  }
+
+  /* 缺失值统一显示「—」，不编造数字 */
   function num(v, dec, unit) {
     if (v == null || isNaN(v)) return '<span class="na">—</span>';
     return v.toFixed(dec) + (unit || '');
@@ -52,14 +91,11 @@ window.BB = window.BB || {};
   }
 
   /* ---------------- 指标卡 ----------------
-     卡片上同时给两个数：绝对值（厘米，直观）和比值（÷身高，可比）。
-     只给厘米的话，180cm 的人和 208cm 的人没法对话；
-     只给比值的话，看不出"我跳了多高"。 */
+     同时给绝对值（厘米，直观）和比值（÷身高，跨身高可比）。 */
   function renderMetrics() {
     var avg = state.res.avg;
     var st = star();
-    /* 游标落在某次出手上时，卡片显示「那一次」的实测值；
-       否则显示这段视频的平均值。两套数字不能混在一张卡里还叫同一个名字。 */
+    /* 游标落在某次出手上时显示那一次的值，否则显示平均值 */
     var live = state.cursor != null ? state.shots[state.cursor] : null;
     var src = live ? live.raw : avg.raw;
     var userRadar = live ? BB.metrics.radarOf(live.raw) : avg.radar;
@@ -125,9 +161,9 @@ window.BB = window.BB || {};
     { name: '罚球线', d: 4.6 }, { name: '三分', d: 6.75 }
   ];
 
-  /* 拍摄机位：偏离正侧面的角度。画面上的出手角是投影出来的，
-     机位越正对投篮者，横向位移压缩得越狠，算出来就越陡。
-     a = null 表示不确定，不做补偿（和以前的算法完全一致）。 */
+  /* 拍摄机位：偏离正侧面的角度。画面上的出手角是投影，
+     机位越正对投篮者，横向位移压缩得越狠，算出来越陡。
+     a = null 表示不确定，不补偿。 */
   var CAMS = [
     { name: '不确定', a: null, tip: '选对机位能修正出手角：斜侧拍出来会偏陡' },
     { name: '侧拍', a: 0, tip: '正侧拍，出手角最准' },
@@ -275,8 +311,7 @@ window.BB = window.BB || {};
         BB.VideoPlayer.seek(state.shots[idx].tRel);
         renderTable();
         renderShotTools();
-        /* 换成这一球之后，概率卡和 3D 轨迹都得跟着换 ——
-           以前只改了高亮和工具条，右栏还停在上一次看的球上。 */
+        /* 换成这一球：概率卡和 3D 轨迹跟着换 */
         renderProb();
         repaintOverlay();
       });
@@ -316,7 +351,7 @@ window.BB = window.BB || {};
       X.shots[Xidx].ball = patch.ball || X.shots[Xidx].ball;
     }
     if (Xidx >= 0 && patch.made !== undefined) X.shots[Xidx].made = patch.made;
-    /* 「手动修正过」这个标记讲解里也要认，否则文案还会念旧的自动判读 */
+    /* 认「手动修正过」标记，讲解文案才不会念旧的自动判读 */
     if (Xidx >= 0 && patch.manual) X.shots[Xidx].manual = true;
     syncArc();   // 改了出手时刻，弧线出现的时间点得跟着挪
   }
@@ -351,7 +386,7 @@ window.BB = window.BB || {};
     state.activeShot = state.shots.length ? Math.min(idx, state.shots.length - 1) : null;
     state.cursor = null;
     if (!state.shots.length && X) {
-      /* 一次都不剩，说明这段视频里没有投篮动作 —— 说清楚，别留一个空看板 */
+      /* 一次出手都不剩：把讲解侧数据一并清掉 */
       X.shots.length = 0;
       state.shots = [];
     }
@@ -359,10 +394,8 @@ window.BB = window.BB || {};
     updateAll();
   }
 
-  /* ---------------- 播放位置 -> 数据联动 ---------------- */
-  /* 用户拖到第 3.2 秒，右边得能对上「视频里这一下」。
-     所以游标落在某次出手 0.55 秒内时，指标卡切成那一次的值并打上「此刻」，
-     表格同步高亮 —— 同一条时间轴，一套数字。 */
+  /* ---------------- 播放位置 -> 数据联动 ----------------
+     游标落在某次出手 0.55 秒内时，指标卡切到那次的值并打「此刻」，表格同步高亮 */
   var lastLiveT = -1;
   function syncPlayhead(t) {
     var bar = $('liveBar');
@@ -398,8 +431,7 @@ window.BB = window.BB || {};
       var i = Math.round(t / dur * (C.length - 1));
       i = Math.max(0, Math.min(C.length - 1, i));
       var row = C[i] || [];
-      /* 「腕高 140% 站高」这种读数没人看得懂，换成「距这次出手还有多久」——
-         用户拖时间轴时真正想知道的是「我拖到出手了吗」。 */
+      /* 「×身高」的比值读数不直观，换成「距下次出手还有多久」 */
       var when = '';
       if (near != null) {
         var dt = t - state.shots[near].tAbs;
@@ -444,8 +476,7 @@ window.BB = window.BB || {};
     if (!Ds || !body) return;
     var s = Ds.summary || {};
     if (sub) sub.textContent = (s.n || 0) + ' 次出手 · ' + (s.cases || 0) + ' 段素材';
-    /* 换成两个「÷身高」的比值：出手点和起跳的绝对厘米数，换个人就不成立了，
-       放在这里当参照会误导人 */
+    /* 用「÷身高」的比值做参照，绝对厘米数换个人就不成立 */
     var cells = [
       ['出手角', s.releaseAngle, '°', 1],
       ['出手点/身高', s.releaseRatio, '×', 2],
@@ -460,7 +491,8 @@ window.BB = window.BB || {};
       '高度类指标已换算成「÷身高」，不同身高的人可以直接比。</p>';
   }
 
-  /* ---------------- 统一定时刷新 ---------------- */
+  /* ---------------- 统一定时刷新 ----------------
+     所有卡片的刷新都从这里走，保证一份数据一个口径 */
   function updateAll() {
     $('shotCount').textContent = state.shots.length;
     $('starNameLabel').textContent = star().name;
@@ -692,7 +724,7 @@ window.BB = window.BB || {};
     $('stage').classList.add('has-video');
     $('drop').hidden = true;
     $('analysing').hidden = true;
-    /* 分析出来了，「正在下载引擎」就不能再挂着 —— 否则停在 85% 像卡死 */
+    /* 分析完成：隐藏引擎下载提示 */
     if ($('engineHint')) $('engineHint').hidden = true;
     $('stageChip').hidden = false;
     $('frameBadge').hidden = false;
@@ -848,9 +880,7 @@ window.BB = window.BB || {};
     return (v >= 130 && v <= 230) ? v : 178;
   }
 
-  /* 进度条只许往前走。
-     引擎预热和逐帧识别是两段独立的上报，范围各自不同，
-     直接覆盖会出现「到 50% 又跳回 5%」这种一眼假的动作。 */
+  /* 进度条单调递增：引擎预热与逐帧识别是两段范围不同的上报，直接覆盖会倒跳 */
   var anRatio = 0;
   function resetAnalyseBar() { anRatio = 0; }
 
@@ -873,16 +903,12 @@ window.BB = window.BB || {};
     $('anText').innerHTML = msg + '<br><span class="an-hint">换一段全身入镜、光线充足的视频再试一次</span>';
   }
 
-  /* 引擎预热提示 + 把真实下载进度接到进度条上。
-     为什么必须有：首次要下近 19MB，没有进度就是一片死寂，
-     用户会以为页面坏了直接关掉 —— 这是「别人用不了」的真正原因，
-     跟服务器无关，这里根本没有服务器。 */
+  /* 引擎预热提示 + 把模型下载进度接到进度条上。首次要下约 19MB，必须有可见进度 */
   function initEngine() {
     var E = BB.PoseEngine;
     var hint = $('engineHint');
 
-    /* 双击打开 html（file://）时浏览器禁掉 ES 模块和 wasm，引擎必然起不来。
-       这里先把话说明白 —— 否则用户只会看到「分析不了」，以为网站坏了。 */
+    /* file:// 下浏览器禁用 ES 模块和 wasm，引擎必然起不来；讲清楚并提供线上入口 */
     if (location.protocol === 'file:') {
       if (hint) {
         hint.hidden = false;
@@ -890,8 +916,7 @@ window.BB = window.BB || {};
         hint.innerHTML = '双击打开的 html 加载不了分析引擎（浏览器不允许），'
           + '这不是网站坏了。换成线上地址就能用。';
       }
-      /* 这个状态下页面本来就跑不了，空态里那些「拖视频进来」的话全是误导，
-         直接换成一句结论 + 一个能点的入口 */
+      /* 该状态下空态文案已换成「线上打开」入口（见下方 DOM 替换） */
       var drop = $('drop');
       if (drop) {
         drop.classList.add('is-file-mode');
@@ -1173,6 +1198,17 @@ window.BB = window.BB || {};
       updateAll();
     });
 
+    /* 视图导航：点击改 hash，hashchange 统一走 setView。
+       hash 没变（重复点同一个 tab）时直接 setView 兜底 */
+    document.querySelectorAll('.view-tab').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var name = b.getAttribute('data-view');
+        if (location.hash !== '#' + name) location.hash = name;
+        else setView(name);
+      });
+    });
+    window.addEventListener('hashchange', function () { setView(currentHashView()); });
+
     document.addEventListener('keydown', function (e) {
       if (e.target.tagName === 'INPUT') return;
       if (e.code === 'Space') { e.preventDefault(); BB.VideoPlayer.toggle(); }
@@ -1198,7 +1234,6 @@ window.BB = window.BB || {};
       BB.Zone.renderCard($('zoneCard'), state.shots.length ? 2.2 : 2.2);
     }
     if (BB.Arc3D) BB.Arc3D.mount($('arcCard'));
-    var ok = BB.Charts.init();
     BB.Overlay.setIdle(true);
     if (BB.Ghost) BB.Ghost.applyFromDims();
     /* 叠加层只有一个绘制钩子，骨骼和 2D 弧线都得画，所以在这里合成一个 */
@@ -1206,8 +1241,9 @@ window.BB = window.BB || {};
       if (BB.Ghost && BB.Ghost.render) BB.Ghost.render(ctx, box, f, side);
       if (BB.Arc2D) BB.Arc2D.render(ctx, box, t);
     });
+    /* hash 决定首屏视图；落在 compare 时会在这里完成图表的懒初始化 */
+    setView(currentHashView());
     updateAll();
-    if (ok) setTimeout(BB.Charts.resize, 60);
   }
 
   if (document.readyState === 'loading') {

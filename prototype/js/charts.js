@@ -15,7 +15,7 @@ window.BB = window.BB || {};
   /* 最近一次喂进来的数据，放大图重建时要用同一份 */
   var last = { shots: null, star: null, curve: null, marks: null };
   var C_USER = '#f97316';
-  var C_STAR = '#2563eb';
+  var C_STAR = '#475569';
   var FONT = 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
 
   function hasLib() { return typeof window.echarts !== 'undefined'; }
@@ -73,7 +73,7 @@ window.BB = window.BB || {};
             value: D.map(function (d) { return starRadar[d.key]; }),
             itemStyle: { color: C_STAR },
             lineStyle: { color: C_STAR, width: 2, type: 'dashed' },
-            areaStyle: { color: 'rgba(37,99,235,0.06)' }
+            areaStyle: { color: 'rgba(71,85,105,0.06)' }
           }
         ]
       }]
@@ -194,14 +194,14 @@ window.BB = window.BB || {};
           lineStyle: { color: C_STAR, width: 2, type: [5, 3] },
           markArea: {
             silent: true,
-            itemStyle: { color: 'rgba(37,99,235,0.045)' },
+            itemStyle: { color: 'rgba(71,85,105,0.045)' },
             label: { show: false },
             data: [[{ yAxis: 45 }, { yAxis: 52 }]]
           },
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: 'rgba(37,99,235,0.55)', type: 'dotted', width: 1.5 },
+            lineStyle: { color: 'rgba(71,85,105,0.55)', type: 'dotted', width: 1.5 },
             label: { formatter: '球星 ' + starAngle + '°', color: C_STAR, fontSize: 10, position: 'insideEndTop' },
             data: [{ yAxis: starAngle }]
           }

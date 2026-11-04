@@ -23,9 +23,9 @@ window.BB = window.BB || {};
   var SHOW_SEC = 2.6; // 一次出手的弧线在画面上停留多久
   var GROW_SEC = 0.65; // 弧线「生长」动画时长
 
-  /* 画面配色：和骨骼的琥珀橙刻意错开，否则叠在一起分不清 */
+  /* 画面配色：轨迹线用天蓝，和橙色骨骼刻意错开，否则叠在一起分不清 */
   var C_LINE = '56,189,248';   // 天蓝
-  var C_HAND = '#22c55e';      // 出手点
+  var C_HAND = '#f97316';      // 出手点（主题橙，白描边和骨骼区分）
   var C_RIM = '#ef4444';       // 篮筐
 
   /* ---------------- 纯几何 ---------------- */
@@ -214,7 +214,7 @@ window.BB = window.BB || {};
       /* 出手点 */
       ctx.beginPath();
       ctx.arc(P0[0], P0[1], 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(34,197,94,' + (0.9 * fade) + ')';
+      ctx.fillStyle = 'rgba(249,115,22,' + (0.9 * fade) + ')';
       ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,' + (0.85 * fade) + ')';
       ctx.lineWidth = 1.5;
@@ -250,7 +250,7 @@ window.BB = window.BB || {};
       var ly = Math.max(box.y + 16, top[1] - 10);
       ctx.fillStyle = 'rgba(8,12,20,' + (0.55 * fade) + ')';
       ctx.fillRect(lx - 5, ly - 13, tw + 10, 16);
-      ctx.fillStyle = 'rgba(226,244,255,' + (0.95 * fade) + ')';
+      ctx.fillStyle = 'rgba(255,247,237,' + (0.95 * fade) + ')';
       ctx.fillText(txt, lx, ly);
 
       ctx.restore();

@@ -1,16 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""生成站点图标。一次性脚本，产物是 prototype/favicon.ico + apple-touch-icon.png。
+"""生成站点图标。
 
-设计：橙色圆角底（品牌色 #f97316）+ 白色投篮抛物线 + 起点处的球。
-小尺寸只保留这三个元素，16px 下也认得出。
-用法: python tools/make_favicon.py
+用法：
+    python tools/make_favicon.py <图片路径> [zoom]   用一张图做图标
+    python tools/make_favicon.py                     用内置绘制的橙色投篮图标
+
+产物：prototype/favicon.ico（16/32/48/64/128/256 六档）、prototype/apple-touch-icon.png
+另存一张 .shots/icon-preview.png 用来看各尺寸的实际效果。
 """
 import os
-from PIL import Image, ImageDraw
+import sys
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 S = 1024
 ROUND = 235
+
+
+# ---------------- 内置绘制版（没有给图片时用） ----------------
 
 # 抛物线：起点 -> 控制点 -> 终点（二次贝塞尔）
 # 终点不落地而是飞向高处（球是朝篮筐去的），否则两条腿落地会变成拱门
@@ -42,8 +49,7 @@ def gradient(size, top=(251, 146, 60), bottom=(234, 88, 12)):
     return img.resize((size, size), Image.BILINEAR)
 
 
-def build_master():
-    # 4x 超采样画弧线，保证边缘干净
+def build_drawn():
     ss = 4
     big = Image.new('L', (S * ss, S * ss), 0)
     d = ImageDraw.Draw(big)
@@ -57,7 +63,6 @@ def build_master():
         d.ellipse([x - r, y - r, x + r, y + r], fill=255)
     mask = big.resize((S, S), Image.LANCZOS)
 
-    # 球
     ball_ss = 4
     bm = Image.new('L', (S * ball_ss, S * ball_ss), 0)
     ImageDraw.Draw(bm).ellipse(
@@ -65,7 +70,6 @@ def build_master():
          (BALL_C[0] + BALL_R) * ball_ss, (BALL_C[1] + BALL_R) * ball_ss], fill=255)
     ball_mask = bm.resize((S, S), Image.LANCZOS)
 
-    # 圆角底
     card = gradient(S).convert('RGBA')
     corner = Image.new('L', (S, S), 0)
     ImageDraw.Draw(corner).rounded_rectangle([0, 0, S - 1, S - 1], radius=ROUND, fill=255)
@@ -77,10 +81,55 @@ def build_master():
     return out
 
 
+# ---------------- 图片版 ----------------
+
+def build_photo(path, zoom=1.0, sharpen=True):
+    """把一张图裁成正方形并放大主体。
+
+    小尺寸图标最怕细节杂：整张图缩到 16px 时，背景纹理全变成噪点。
+    所以先居中裁方形，再按 zoom 往里收一点（把主体占满画布），
+    最后提一点对比度和锐度，让剪影在 16px 下还能立住。
+    """
+    im = Image.open(path).convert('RGB')
+    w, h = im.size
+
+    side = min(w, h)
+    left = (w - side) // 2
+    top = (h - side) // 2
+    im = im.crop((left, top, left + side, top + side))
+
+    if zoom > 1.0:
+        keep = int(side / zoom)
+        off = (side - keep) // 2
+        im = im.crop((off, off, off + keep, off + keep))
+
+    im = im.resize((S, S), Image.LANCZOS)
+    im = ImageEnhance.Color(im).enhance(1.12)
+    im = ImageEnhance.Contrast(im).enhance(1.10)
+    if sharpen:
+        im = im.filter(ImageFilter.UnsharpMask(radius=2, percent=70, threshold=2))
+
+    out = im.convert('RGBA')
+    corner = Image.new('L', (S, S), 0)
+    ImageDraw.Draw(corner).rounded_rectangle([0, 0, S - 1, S - 1], radius=ROUND, fill=255)
+    out.putalpha(corner)
+    return out
+
+
+# ---------------- 输出 ----------------
+
 def main():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     proto = os.path.join(root, 'prototype')
-    master = build_master()
+
+    if len(sys.argv) > 1:
+        src = sys.argv[1]
+        zoom = float(sys.argv[2]) if len(sys.argv) > 2 else 1.0
+        master = build_photo(src, zoom=zoom)
+        tag = 'photo zoom=' + str(zoom)
+    else:
+        master = build_drawn()
+        tag = 'drawn'
 
     ico = os.path.join(proto, 'favicon.ico')
     master.save(ico, format='ICO',
@@ -91,15 +140,20 @@ def main():
     master.resize((180, 180), Image.LANCZOS).save(touch, format='PNG', optimize=True)
     print('written', touch, os.path.getsize(touch), 'bytes')
 
+    # 各尺寸实际效果，按 16/32/48/64/128 从左到右摆一排
     preview = os.path.join(root, '.shots', 'icon-preview.png')
     os.makedirs(os.path.dirname(preview), exist_ok=True)
-    strip = Image.new('RGBA', (16 + 32 + 48 + 64 + 128 + 40 * 5 + 20, 160), (255, 255, 255, 255))
-    x = 10
-    for s in (16, 32, 48, 64, 128):
-        strip.paste(master.resize((s, s), Image.LANCZOS), (x, 150 - s - 8), master.resize((s, s), Image.LANCZOS))
-        x += s + 40
+    gap = 36
+    widths = [16, 32, 48, 64, 128]
+    total_w = sum(widths) + gap * (len(widths) - 1) + 40
+    strip = Image.new('RGBA', (total_w, 200), (246, 247, 249, 255))
+    x = 20
+    for s in widths:
+        thumb = master.resize((s, s), Image.LANCZOS)
+        strip.paste(thumb, (x, 180 - s - 20), thumb)
+        x += s + gap
     strip.save(preview)
-    print('written', preview)
+    print('written', preview, '(' + tag + ')')
 
 
 if __name__ == '__main__':

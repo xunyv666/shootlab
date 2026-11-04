@@ -28,6 +28,13 @@ window.BB = window.BB || {};
     return v.toFixed(dec) + (unit || '');
   }
 
+  /* 文件名是用户输入，进 innerHTML 前必须转义，否则同名注入是现成漏洞 */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
   /* ---------------- 球星选择 ---------------- */
   function renderStars() {
     $('starChips').innerHTML = D.STAR_ORDER.map(function (id) {
@@ -735,7 +742,6 @@ window.BB = window.BB || {};
     var use = function () {
       if (!v.videoWidth) return;
       var a = v.videoWidth / v.videoHeight;
-      BB.Overlay.setVideoAspect(a);
       /* 手机竖拍占大多数，舞台固定 16:10.4 会让画面缩成中间一条，
          左右全是黑边。这里按视频本身比例给舞台定高（夹在合理范围内）。 */
       st.style.aspectRatio = Math.min(1.7, Math.max(0.68, a)).toFixed(3);
@@ -750,7 +756,7 @@ window.BB = window.BB || {};
     var X = state.exp, bar = $('expBar');
     if (!X || !bar) return;
     var bt = X.meta.ballTrack;
-    var bits = ['<b>' + X.meta.subject + '</b>', X.meta.source];
+    var bits = ['<b>' + esc(X.meta.subject) + '</b>', esc(X.meta.source)];
     if (bt && bt.ok) bits.push('球轨迹 ' + bt.n_points + ' 点');
     else if (X.meta.userVideo) {
       var why = (bt && bt.reason) ? '（' + bt.reason + '）' : '';
@@ -1144,18 +1150,26 @@ window.BB = window.BB || {};
       BB.Coach.open(state.exp);
     });
 
-    /* 改身高后重算高度类指标：只重算厘米换算，不重跑模型 */
+    /* 改身高后重算高度类指标：只重算厘米换算，不重跑模型。
+       exp.shots（讲解在用）和 state.shots（界面在用）必须一起改，
+       漏一份，讲解里还是按旧身高算的数。改完按 applyResult 的口径
+       从 exp 重建视图，tAbs、manual 标记不至于换身高时丢掉。 */
     var hi = $('heightInput');
     if (hi) hi.addEventListener('change', function () {
-      if (!state.exp) return;
-      var k = height() / (state.exp.meta.heightCm || 178);
-      state.shots = state.shots.map(function (s) {
-        var r = Object.assign({}, s.raw);
+      var X = state.exp;
+      if (!X) return;
+      var k = height() / (X.meta.heightCm || 178);
+      var rescale = function (raw) {
+        var r = Object.assign({}, raw);
         if (r.releaseHeight != null) r.releaseHeight = Math.round(r.releaseHeight * k * 10) / 10;
         if (r.jumpHeight != null) r.jumpHeight = Math.round(r.jumpHeight * k * 10) / 10;
-        return { id: s.id, tRel: s.tRel, made: s.made, raw: r, exp: true };
+        return r;
+      };
+      X.shots.forEach(function (x) { x.raw = rescale(x.raw); });
+      state.shots = X.shots.map(function (s, i) {
+        return { id: i + 1, tRel: s.tRel, tAbs: s.tAbs, made: s.made, raw: s.raw, exp: true, manual: s.manual };
       });
-      state.exp.meta.heightCm = height();
+      X.meta.heightCm = height();
       updateAll();
     });
 

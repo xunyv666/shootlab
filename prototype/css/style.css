@@ -86,11 +86,11 @@ button { font-family: inherit; cursor: pointer; }
 .chip span { font-size: 10.5px; color: var(--text-3); }
 .chip:hover { border-color: #d6dbe4; transform: translateY(-1px); }
 .chip.active {
-  background: var(--blue-soft);
-  border-color: #c3d4fb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+  background: var(--orange-soft);
+  border-color: #ffd9b8;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, .08);
 }
-.chip.active b { color: var(--blue); }
+.chip.active b { color: #c2410c; }
 
 .topbar-right { display: flex; align-items: center; gap: 10px; flex: none; }
 
@@ -210,7 +210,7 @@ button { font-family: inherit; cursor: pointer; }
   white-space: nowrap;
 }
 .card-head .sub { font-size: 12px; color: var(--text-2); }
-.card-head .sub b { color: var(--blue); font-weight: 650; }
+.card-head .sub b { color: #c2410c; font-weight: 650; }
 .head-tools {
   display: flex; align-items: center; gap: 6px;
   flex-wrap: wrap; justify-content: flex-end;

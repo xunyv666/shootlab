@@ -211,6 +211,10 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 600;
   padding: 9px 18px;
   border-radius: 999px;
+  /* 窄屏 flex 收缩时按钮会变窄，文字逐字折行竖成一列；
+     锁死不折行、不收缩，宽度超出时靠下面的断点收紧内边距 */
+  white-space: nowrap;
+  flex: none;
   transition: color .18s ease;
 }
 .view-tab:hover { color: var(--text); }
@@ -230,6 +234,12 @@ button { font-family: inherit; cursor: pointer; }
 }
 /* 首次定位不动画：否则页面加载时下衬线会从 0 飞过来 */
 .view-ink.no-anim { transition: none; }
+
+/* 手机端：三个按钮 + 内边距接近小屏宽度，收紧内边距和字号保证单行放下 */
+@media (max-width: 480px) {
+  .views { max-width: calc(100vw - 20px); }
+  .view-tab { padding: 8px 12px; font-size: 12.5px; }
+}
 
 /* 视图切换只动这个类，不碰卡片自己的 hidden 状态
    （prob/arc 卡的显隐由数据有无管理，交给 updateAll） */

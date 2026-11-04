@@ -359,7 +359,7 @@
     if (!a) return;
     var host = location.hostname;
     if (/\.github\.io$/i.test(host)) { a.hidden = true; return; }
-    if (/^shootlab\./i.test(host)) {
+    if (/^shootlab(-[a-z0-9-]+)?\./i.test(host)) {
       a.href = 'https://ai-6f8.pages.dev/';
       a.title = '回到作品集（个人网站）';
     }

@@ -32,7 +32,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 14px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -64,8 +64,8 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: 0 4px 12px -3px rgba(234, 88, 12, .55);
 }
 
-.brand-text h1 { font-size: 15px; font-weight: 650; letter-spacing: .2px; }
-.brand-text p { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.brand-text h1 { font-size: 19px; font-weight: 700; letter-spacing: .2px; }
+.brand-text p { font-size: 12px; color: var(--text-3); margin-top: 3px; }
 
 .compare { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .compare-label { font-size: 12px; color: var(--text-3); flex: none; }
@@ -93,24 +93,6 @@ button { font-family: inherit; cursor: pointer; }
 .chip.active b { color: var(--blue); }
 
 .topbar-right { display: flex; align-items: center; gap: 10px; flex: none; }
-
-/* 回到作品集的入口：挂在顶栏右侧最前面，用最轻的重量，
-   不抢「分析我的视频」这个主按钮的注意力 */
-.back-link {
-  font-size: 12px;
-  color: var(--text-2);
-  text-decoration: none;
-  padding: 6px 11px;
-  border-radius: 9px;
-  border: 1px solid var(--line);
-  background: #fff;
-  transition: all .16s ease;
-}
-.back-link:hover {
-  background: #fff;
-  border-color: var(--line);
-  color: var(--text);
-}
 
 .stat-pill {
   font-size: 12px; color: var(--text-2);
@@ -169,14 +151,42 @@ button { font-family: inherit; cursor: pointer; }
 .layout {
   display: grid;
   grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
-  gap: 14px;
-  padding: 14px 18px 40px;
+  gap: 18px;
+  padding: 18px 22px 48px;
   align-items: start;
   max-width: 1680px;
   margin: 0 auto;
 }
-.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .col-left { position: sticky; top: 74px; }
+
+/* ---------------- 视图导航 ----------------
+   分析 / 对比建议 / 点位概率三个视图共用一个根路径；
+   hash 路由在任何部署子路径（含 file://）都不需要服务端配置。 */
+.views {
+  display: flex;
+  gap: 4px;
+  padding: 14px 22px 0;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+.view-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: color .15s ease, background .15s ease;
+}
+.view-tab:hover { color: var(--text); background: #eef1f6; }
+.view-tab.active { background: var(--text); color: #fff; }
+
+/* 视图切换只动这个类，不碰卡片自己的 hidden 状态
+   （prob/arc 卡的显隐由数据有无管理，交给 updateAll） */
+.view-off { display: none !important; }
 
 /* ---------------- 卡片 ---------------- */
 .card {
@@ -191,10 +201,16 @@ button { font-family: inherit; cursor: pointer; }
   border-bottom: 1px solid var(--line-soft);
   flex-wrap: wrap;
 }
-/* 左列窄，标题和工具按钮挤在一起会双双换行，很难看：标题不折，工具自己换行 */
-.card-head h2 { font-size: 13.5px; font-weight: 650; letter-spacing: .2px; white-space: nowrap; }
-.card-head .sub { font-size: 11.5px; color: var(--text-3); }
-.card-head .sub b { color: var(--blue); font-weight: 600; }
+/* 左列窄，标题和工具按钮挤在一起会双双换行：标题不折，工具自己换行。
+   卡片标题做成 11px 小标签（eyebrow），把视觉重量让给数据和主舞台 */
+.card-head h2 {
+  font-size: 11px; font-weight: 650;
+  letter-spacing: .09em;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.card-head .sub { font-size: 12px; color: var(--text-2); }
+.card-head .sub b { color: var(--blue); font-weight: 650; }
 .head-tools {
   display: flex; align-items: center; gap: 6px;
   flex-wrap: wrap; justify-content: flex-end;
@@ -401,27 +417,27 @@ td.c-score b { font-size: 13px; }
 .metrics {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 .metric {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 11px 12px 12px;
+  padding: 12px 14px 14px;
   box-shadow: var(--shadow);
 }
 .m-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.m-name { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
-.m-delta { font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.m-name { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.m-delta { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .m-val {
-  font-size: 21px; font-weight: 640; letter-spacing: -.5px;
-  margin: 5px 0 2px;
+  font-size: 26px; font-weight: 660; letter-spacing: -.4px;
+  margin: 6px 0 3px;
   font-variant-numeric: tabular-nums;
 }
-.m-val small { font-size: 11px; font-weight: 500; color: var(--text-3); margin-left: 2px; }
+.m-val small { font-size: 12px; font-weight: 500; color: var(--text-3); margin-left: 2px; }
 .m-sub {
-  font-size: 10.5px; color: var(--text-3);
-  line-height: 1.4;
+  font-size: 11.5px; color: var(--text-3);
+  line-height: 1.45;
   /* 原来是一行 nowrap + 省略号，「目标 1.15–1.30」这种会被截成「目标 1.15–1...」，
      关键信息正好断在最要紧的地方。改成最多两行。 */
   display: -webkit-box;
@@ -439,8 +455,8 @@ td.c-score b { font-size: 13px; }
 }
 
 /* ---------------- 图表 ---------------- */
-.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.chart-card .chart { height: 296px; padding: 4px 6px 6px; }
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.chart-card .chart { height: 300px; padding: 4px 6px 6px; }
 /* 卡片里只有半屏宽，20 次出手会挤成一团 —— 右上角给一个放大入口 */
 .head-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .zoom-btn {
@@ -1111,7 +1127,7 @@ td.c-score b { font-size: 13px; }
 
 /* ---------- 空数据占位 ---------- */
 .na { color: #aab3c0; letter-spacing: 0; }
-.metric.is-empty .m-val { font-size: 20px; }
+.metric.is-empty .m-val { font-size: 24px; }
 .empty-row {
   text-align: center;
   color: var(--text-3);

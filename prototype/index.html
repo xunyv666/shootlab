@@ -18,7 +18,7 @@
     </div>
     <div class="brand-text">
       <h1>ShootLab 投篮动作分析</h1>
-      <p>交互原型 v0.5 · 指标按身高归一化，出手角按出手点个性化 · 建议可追溯到库里大师课原话</p>
+      <p>指标按身高归一化 · 建议附库里大师课原话出处</p>
     </div>
   </div>
 
@@ -28,18 +28,23 @@
   </div>
 
   <div class="topbar-right">
-    <a class="back-link" id="backLink" href="../" title="回到作品集">← 作品集</a>
     <div class="stat-pill">已记录 <b id="shotCount">0</b> 次出手</div>
     <label class="btn btn-primary" for="fileInput">分析我的视频</label>
   </div>
 </header>
+
+<nav class="views" id="viewTabs" aria-label="视图">
+  <button class="view-tab active" data-view="analyze">分析</button>
+  <button class="view-tab" data-view="compare">对比 · 建议</button>
+  <button class="view-tab" data-view="zone">点位 · 概率</button>
+</nav>
 
 <main class="layout">
 
   <!-- ================= 左列 ================= -->
   <section class="col col-left">
 
-    <div class="card video-card">
+    <div class="card video-card" data-view="analyze compare zone">
       <div class="card-head">
         <h2>视频分析</h2>
         <div class="head-tools">
@@ -60,7 +65,7 @@
         <video id="video" playsinline muted></video>
         <canvas id="overlay"></canvas>
 
-        <!-- 空态：没有视频时这里是唯一的主视觉，不做任何假动画 -->
+        <!-- 空态主视觉 -->
         <div class="drop" id="drop">
           <div class="drop-art">
             <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
@@ -84,7 +89,7 @@
           <p class="engine-hint" id="engineHint" hidden></p>
         </div>
 
-        <!-- 分析中：进度必须可见，否则几十秒像卡死 -->
+        <!-- 分析中 -->
         <div class="analysing" id="analysing" hidden>
           <div class="an-box">
             <div class="an-head"><b id="anTitle">正在分析</b><span id="anPct">0%</span></div>
@@ -96,7 +101,7 @@
         <span class="ghost-note" id="ghostNote" hidden></span>
         <span class="stage-chip" id="stageChip" hidden></span>
         <span class="frame-badge" id="frameBadge" hidden></span>
-        <!-- 画投篮轨迹需要知道篮筐在哪：点一下画面就标定，标一次全片通用 -->
+        <!-- 篮筐标定：点一下画面，全片通用 -->
         <div class="rim-hint" id="rimHint" hidden></div>
       </div>
 
@@ -107,8 +112,7 @@
         <div class="track-head" id="trackHead"></div>
       </div>
 
-      <!-- 此刻：拖到哪一秒，这里就显示那一帧的实测值，
-           和右边指标卡是同一份数据，不是两套 -->
+      <!-- 此刻：播放位置所在帧的实测值，与右侧指标卡同源 -->
       <div class="live" id="liveBar" hidden>
         <span class="live-t" id="liveT">0.00s</span>
         <span class="live-shot" id="liveShot">—</span>
@@ -126,14 +130,14 @@
       </div>
       <p class="shortcut" id="shortcut" hidden>空格 播放/暂停 · ←→ 逐帧 · 点击时间轴跳转</p>
 
-      <!-- 数据来源条：必须写清楚这批数字从哪来的 -->
+      <!-- 数据来源条 -->
       <div class="exp-bar" id="expBar" hidden>
         <span class="exp-dot"></span>
         <span class="exp-text" id="expText"></span>
         <button class="exp-exit" id="expExit">重新选择</button>
       </div>
 
-      <!-- 讲解入口：分析完直接能听一遍「这球好在哪、该改哪」 -->
+      <!-- 讲解入口 -->
       <div class="coach-cta" id="coachCta" hidden>
         <span class="cta-ico">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -150,12 +154,12 @@
       </div>
     </div>
 
-    <div class="card table-card">
+    <div class="card table-card" data-view="analyze">
       <div class="card-head">
         <h2>出手记录</h2>
         <span class="sub" id="tableSub"></span>
       </div>
-      <!-- 选中某次出手后出现的工具条：自动判定总会错几次，得让人自己改 -->
+      <!-- 选中某次出手后的工具条 -->
       <div class="shot-tools" id="shotTools" hidden>
         <span class="st-idx">第 <b id="stIdx">1</b> 次</span>
         <button class="btn btn-sm" id="stSet" title="把出手时刻改成视频当前播放的位置，全部指标重算">用当前帧当出手点</button>
@@ -181,8 +185,8 @@
       </div>
     </div>
 
-    <!-- 真实样本库：说明「这些数字多大算正常」不是拍脑袋定的 -->
-    <div class="card ds-card">
+    <!-- 真实样本库 -->
+    <div class="card ds-card" data-view="compare">
       <div class="card-head">
         <h2>真实样本库</h2>
         <span class="sub" id="dsSub"></span>
@@ -195,15 +199,15 @@
   <!-- ================= 右列 ================= -->
   <section class="col col-right">
 
-    <div class="metrics" id="metrics"></div>
+    <div class="metrics" id="metrics" data-view="analyze"></div>
 
     <!-- 进球概率：物理算「这个出手角能不能进」，再按姿势修正 -->
-    <div class="card prob-card" id="probCard" hidden></div>
+    <div class="card prob-card" id="probCard" data-view="zone" hidden></div>
 
     <!-- 3D 轨迹：按出手角解出的抛物线，标「推算」；不是跟拍到的球 -->
-    <div class="card arc-card" id="arcCard" hidden></div>
+    <div class="card arc-card" id="arcCard" data-view="zone" hidden></div>
 
-    <div class="chart-grid">
+    <div class="chart-grid" data-view="compare">
       <div class="card chart-card">
         <div class="card-head">
           <h2>动作维度对比</h2>
@@ -227,16 +231,16 @@
     </div>
 
     <!-- 点位与打板：什么位置该用什么方式投 -->
-    <div class="card zone-card" id="zoneCard"></div>
+    <div class="card zone-card" id="zoneCard" data-view="zone"></div>
 
-    <div class="card suggest-card" id="suggestCard"></div>
+    <div class="card suggest-card" id="suggestCard" data-view="compare"></div>
 
   </section>
 </main>
 
 <div class="modal" id="modal" hidden></div>
 
-<!-- 图表放大层：趋势图要放 20 次出手，半屏宽全是挤在一起的点 -->
+<!-- 图表放大层 -->
 <div class="chart-zoom" id="chartZoom" hidden>
   <div class="cz-panel">
     <div class="cz-head">
@@ -256,7 +260,7 @@
   </div>
 </div>
 
-<!-- 库里原话回看层：点击任意引用块，直接跳到讲解那一秒 -->
+<!-- 库里原话回看层 -->
 <div class="quote-layer" id="quoteLayer" hidden>
   <div class="ql-panel">
     <div class="ql-head">
@@ -267,8 +271,7 @@
       <button class="modal-close" id="qlClose" aria-label="关闭">×</button>
     </div>
     <div class="ql-video-wrap">
-      <!-- src 直接写在这里：写进属性后页面解析时就开始取元数据，
-           点开会话时才能立刻 seek。懒加载在本地大文件上反而更容易卡住 -->
+      <!-- src 写在属性里：页面解析时即取元数据，点开时能立即 seek -->
       <video id="quoteVideo" src="media/curry_p2.mp4" preload="metadata" playsinline controls></video>
     </div>
     <div class="ql-video-wrap-tip" id="qlTip" hidden>
@@ -285,7 +288,7 @@
   </div>
 </div>
 
-<!-- 教练讲解层：把你的视频定格在 6 个关键瞬间，逐段圈画 + 旁白 -->
+<!-- 教练讲解层 -->
 <div class="coach-layer" id="coachLayer" hidden>
   <div class="coach-head">
     <div class="coach-title">
@@ -320,7 +323,7 @@
   </div>
 </div>
 
-<script src="vendor/echarts.min.js"></script>
+<script defer src="vendor/echarts.min.js"></script>
 <script src="js/data.js"></script>
 <script src="js/knowledge.js"></script>
 <script src="js/experiment.js"></script>
@@ -340,30 +343,12 @@
 <script src="js/coach.js"></script>
 <script src="js/app.js"></script>
 
-<!-- 分析引擎是 ES 模块（里面 import MediaPipe 的 wasm 运行时）。
-     模块脚本天然 defer，跑在 app.js 之后；app.js 只在用户选视频时才碰它，
-     所以顺序不影响。必须走 http(s) 打开，file:// 下浏览器不允许加载模块。 -->
+<!-- 分析引擎是 ES 模块（内含 MediaPipe wasm 运行时），必须经 http(s) 打开 -->
 <script type="module">
   import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
   window.BB = window.BB || {};
   window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady };
   document.documentElement.classList.add('engine-ready');
-</script>
-<script>
-  /* 「← 作品集」的落点随部署位置变 —— 同一份代码现在同时活在三个地方：
-       1. 个人网站子路径  /shootlab/       → ../ 就是作品集，不动
-       2. 独立站          shootlab.pages.dev → ../ 会掉回自己，指向主站
-       3. GitHub Pages    空站点根目录      → 没有作品集可回，藏掉 */
-  (function () {
-    var a = document.getElementById('backLink');
-    if (!a) return;
-    var host = location.hostname;
-    if (/\.github\.io$/i.test(host)) { a.hidden = true; return; }
-    if (/^shootlab(-[a-z0-9-]+)?\./i.test(host)) {
-      a.href = 'https://ai-6f8.pages.dev/';
-      a.title = '回到作品集（个人网站）';
-    }
-  })();
 </script>
 </body>
 </html>

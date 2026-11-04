@@ -24,7 +24,9 @@ mimetypes.add_type('video/webm', '.webm')
 mimetypes.add_type('video/mp4', '.mp4')
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8931
-ROOT = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
+ROOT = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 else os.getcwd()
+# ROOT 必须绝对化：os.chdir(ROOT) 之后 handler 的 directory 若还是相对路径，
+# 会被解析成「cwd 下的同名子目录」（prototype/prototype/），整个服务 404
 
 
 class RangeHandler(http.server.SimpleHTTPRequestHandler):
@@ -83,8 +85,8 @@ class RangeHandler(http.server.SimpleHTTPRequestHandler):
                     break
                 self.wfile.write(chunk)
                 left -= len(chunk)
-        except (BrokenPipeError, ConnectionResetError):
-            pass
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass   # 浏览器取消加载（拖动进度条/中断 wasm 下载）是常态，不算错误
         finally:
             f.close()
 

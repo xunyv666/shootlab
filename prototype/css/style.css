@@ -150,7 +150,8 @@ button { font-family: inherit; cursor: pointer; }
   display: grid;
   grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
   gap: 18px;
-  padding: 18px 22px 48px;
+  /* 底部留白要盖过悬浮胶囊导航的高度，滚动到底时最后一张卡不被压住 */
+  padding: 18px 22px 104px;
   align-items: start;
   max-width: 1680px;
   margin: 0 auto;
@@ -158,15 +159,48 @@ button { font-family: inherit; cursor: pointer; }
 .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .col-left { position: sticky; top: 74px; }
 
-/* ---------------- 视图导航 ----------------
+/* ---------------- 底部悬浮胶囊导航 ----------------
    分析 / 对比建议 / 点位概率三个视图共用一个根路径；
-   hash 路由在任何部署子路径（含 file://）都不需要服务端配置。 */
+   hash 路由在任何部署子路径（含 file://）都不需要服务端配置。
+   胶囊本体是液态玻璃（高斯模糊 + 提饱和），底边到胶囊之间
+   垫一层渐进模糊，滚动内容穿过时被逐渐虚化。 */
+.bottom-blur {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 110px;
+  pointer-events: none;
+  z-index: 40;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  /* 渐进：越靠近底边越实，向上淡出到无 */
+  -webkit-mask-image: linear-gradient(to top, #000 35%, transparent);
+  mask-image: linear-gradient(to top, #000 35%, transparent);
+}
 .views {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 41;
   display: flex;
-  gap: 4px;
-  padding: 14px 22px 0;
-  max-width: 1680px;
-  margin: 0 auto;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .62);
+  border: 1px solid rgba(255, 255, 255, .7);
+  box-shadow:
+    0 10px 34px rgba(15, 23, 42, .16),
+    0 2px 8px rgba(15, 23, 42, .08),
+    inset 0 1px 0 rgba(255, 255, 255, .8);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+}
+/* 点击弹动：轻微放大再弹回，二次缓出（easeOutQuad） */
+.views.bounce { animation: viewBounce .38s cubic-bezier(.25, .46, .45, .94); }
+@keyframes viewBounce {
+  0%   { transform: translateX(-50%) scale(1); }
+  35%  { transform: translateX(-50%) scale(1.05); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 .view-tab {
   appearance: none;
@@ -175,16 +209,36 @@ button { font-family: inherit; cursor: pointer; }
   color: var(--text-2);
   font-size: 13.5px;
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-radius: 999px;
-  transition: color .15s ease, background .15s ease;
+  transition: color .18s ease;
 }
-.view-tab:hover { color: var(--text); background: #eef1f6; }
-.view-tab.active { background: var(--text); color: #fff; }
+.view-tab:hover { color: var(--text); }
+.view-tab.active { color: var(--text); }
+/* 选中态下衬线：绝对定位小条，切换时从旧位置滑到新位置（二次缓出），
+   位置和宽度由 JS 按激活按钮的几何信息写入 */
+.view-ink {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--orange);
+  transition: transform .32s cubic-bezier(.25, .46, .45, .94),
+              width .32s cubic-bezier(.25, .46, .45, .94);
+  will-change: transform, width;
+}
+/* 首次定位不动画：否则页面加载时下衬线会从 0 飞过来 */
+.view-ink.no-anim { transition: none; }
 
 /* 视图切换只动这个类，不碰卡片自己的 hidden 状态
    （prob/arc 卡的显隐由数据有无管理，交给 updateAll） */
 .view-off { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .views.bounce { animation: none; }
+  .view-ink { transition: none; }
+}
 
 /* ---------------- 卡片 ---------------- */
 .card {

@@ -33,12 +33,6 @@
   </div>
 </header>
 
-<nav class="views" id="viewTabs" aria-label="视图">
-  <button class="view-tab active" data-view="analyze">分析</button>
-  <button class="view-tab" data-view="compare">对比 · 建议</button>
-  <button class="view-tab" data-view="zone">点位 · 概率</button>
-</nav>
-
 <main class="layout">
 
   <!-- ================= 左列 ================= -->
@@ -240,6 +234,17 @@
 
   </section>
 </main>
+
+<!-- 底部渐进模糊垫层：滚动内容从底边穿过时被逐渐虚化，不硬切 -->
+<div class="bottom-blur" aria-hidden="true"></div>
+
+<!-- 底部悬浮胶囊导航：液态玻璃背景，选中项下衬线滑动跟随 -->
+<nav class="views" id="viewTabs" aria-label="视图">
+  <button class="view-tab active" data-view="analyze">分析</button>
+  <button class="view-tab" data-view="compare">对比 · 建议</button>
+  <button class="view-tab" data-view="zone">点位 · 概率</button>
+  <span class="view-ink no-anim" id="viewInk" aria-hidden="true"></span>
+</nav>
 
 <div class="modal" id="modal" hidden></div>
 

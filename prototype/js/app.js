@@ -36,6 +36,23 @@ window.BB = window.BB || {};
     return VIEWS.indexOf(h) >= 0 ? h : 'analyze';
   }
 
+  /* 下衬线滑到当前激活 tab 的正下方；
+     几何信息按导航容器坐标写入 transform/width，交给 CSS 二次缓出过渡 */
+  function moveInk(instant) {
+    var ink = $('viewInk');
+    var nav = $('viewTabs');
+    if (!ink || !nav) return;
+    var cur = nav.querySelector('.view-tab.active');
+    if (!cur) return;
+    if (instant) ink.classList.add('no-anim');
+    ink.style.width = cur.offsetWidth + 'px';
+    ink.style.transform = 'translateX(' + cur.offsetLeft + 'px)';
+    /* 下一帧恢复过渡：首帧定位（HTML 带 no-anim）不产生从 0 飞过来的动画 */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { ink.classList.remove('no-anim'); });
+    });
+  }
+
   function setView(name) {
     if (VIEWS.indexOf(name) < 0) name = 'analyze';
     state.view = name;
@@ -45,6 +62,7 @@ window.BB = window.BB || {};
     document.querySelectorAll('.view-tab').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-view') === name);
     });
+    moveInk(false);
     /* 离开分析页先停视频 */
     if (name !== 'analyze') {
       var v = BB.VideoPlayer.state.video;
@@ -1245,14 +1263,29 @@ window.BB = window.BB || {};
     });
 
     /* 视图导航：点击改 hash，hashchange 统一走 setView。
-       hash 没变（重复点同一个 tab）时直接 setView 兜底 */
+       hash 没变（重复点同一个 tab）时直接 setView 兜底；
+       每次点击胶囊轻微放大弹动一下（动画结束自动摘掉类） */
+    var nav = $('viewTabs');
     document.querySelectorAll('.view-tab').forEach(function (b) {
       b.addEventListener('click', function () {
+        if (nav) {
+          nav.classList.remove('bounce');
+          void nav.offsetWidth;    // 重排重启动画，连续点击也能每次弹
+          nav.classList.add('bounce');
+        }
         var name = b.getAttribute('data-view');
         if (location.hash !== '#' + name) location.hash = name;
         else setView(name);
       });
     });
+    if (nav) {
+      nav.addEventListener('animationend', function () { nav.classList.remove('bounce'); });
+      /* 字体加载完成/窗口缩放会改变 tab 宽度，下衬线跟着重新对位 */
+      window.addEventListener('resize', function () { moveInk(false); });
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { moveInk(false); });
+      }
+    }
     window.addEventListener('hashchange', function () { setView(currentHashView()); });
 
     document.addEventListener('keydown', function (e) {

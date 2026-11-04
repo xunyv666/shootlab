@@ -27,23 +27,44 @@
 页面用 ES module 加载姿态模型，**必须通过 http 打开**，双击 `index.html` 不行。
 
 ```bash
-# 需要带 Range 支持的静态服务器（视频要能 seek）
-python tools/serve.py 8931 prototype
+npm run serve          # 或：python tools/serve.py 8931 prototype
 # 然后打开 http://127.0.0.1:8931/index.html
 ```
 
 Windows 下也可以直接双击 `启动预览.bat`。
+
+## 开发
+
+`prototype/` 无构建步骤，改完 JS 刷新页面即可。仓库自带的质量检查：
+
+```bash
+ruff check tools               # Python lint（配置在 pyproject.toml）
+node --check prototype/js/app.js  # 单个 JS 的语法检查
+```
 
 ## 部署
 
 `prototype/` 是一个纯静态站点，所有资源路径都是相对的，
 整个目录放到任意子路径下都能跑，不依赖后端。
 
-- **GitHub Pages**：仓库已带 `.github/workflows/pages.yml`，
-  推上去后在 Settings → Pages 里把 Source 选成「GitHub Actions」即可
+- **Cloudflare Pages（自动）**：仓库已带 `.github/workflows/deploy.yml`，
+  推到 `main` 即部署到 Cloudflare Pages 两个项目
+  （`shootlab-pro` 对外地址 + `shootlab` 旧地址）。
+  需要 Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`
+- **Cloudflare Pages（手动）**：`bash tools/deploy.sh`（需先 `wrangler login`）
 - **其它静态托管**：把 `prototype/` 上传到站点子目录即可
 - 注意服务端要能正确返回 `.wasm` 的 MIME 类型（`application/wasm`），
-  否则姿态模型加载失败
+  否则姿态模型加载失败（`tools/serve.py` 本地已处理）
+
+## 工具链环境
+
+离线实验脚本（`tools/`）依赖 numpy、OpenCV、MediaPipe、Pillow、matplotlib，
+依赖统一声明在根目录 `pyproject.toml`：
+
+```bash
+uv sync     # 没有 uv 就先 pip install uv；它按 pyproject.toml 建 .venv 并装依赖
+# 不用 uv 的话手动装：pip install numpy opencv-python mediapipe pillow matplotlib
+```
 
 ## 目录
 
@@ -61,7 +82,9 @@ prototype/            静态站点本体（部署的就是这个目录）
   models/             MediaPipe 姿态模型
   vendor/             ECharts、MediaPipe runtime
 tools/                离线实验脚本（抽帧、姿态提取、球轨迹、批量建数据集）
+  serve.py            带 Range 支持的本地静态服务器
 data/                 离线实验产出的数据
+.github/workflows/    ci.yml（lint/语法检查）、deploy.yml（推 main 自动部署）
 ```
 
 ## 指标是怎么来的
@@ -83,4 +106,4 @@ data/                 离线实验产出的数据
 
 ## 许可
 
-个人项目，未附许可证。
+[MIT](LICENSE)。MediaPipe 模型与 ECharts 的许可见其官方仓库。

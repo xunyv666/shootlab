@@ -24,9 +24,11 @@ const L_AN = 27, R_AN = 28;
 const KEY = [L_SH, R_SH, L_HIP, R_HIP, L_AN, R_AN];
 
 /* 采样节奏：跳绳是 2–3Hz 的周期动作，20–30fps 足够夹住峰值。
-   长视频按上限自动降采样，避免一次分析跑十几分钟。 */
+   上限必须够长：1200 帧时，2 分钟的视频只剩 10fps、3 分钟只剩 6.7fps，
+   快速连跳会成片漏计（实测 3 分钟 120 次/分只数出 1/4）。
+   3600 帧能保证 2 分钟内 30fps、3 分钟内 20fps、4 分钟内 15fps。 */
 const SAMPLE_FPS = 30;
-const MAX_SAMPLES = 1200;
+const MAX_SAMPLES = 3600;
 
 /* 身体尺度：鼻尖到踝的跨度约为身高的 0.891 倍（Drillis & Contini）。
    和投篮模块用同一套人体测量学口径，两个项目的身高换算才可比。 */
@@ -69,6 +71,55 @@ function smoothSignal(arr) {
   for (let i = 0; i < n; i++) {
     const w = [med[i - 1], med[i], med[i + 1]].filter(x => x != null && isFinite(x));
     if (w.length) out[i] = w.reduce((a, b) => a + b, 0) / w.length;
+  }
+  return out;
+}
+
+/* 滚动中位数。
+   人会在固定机位里前后走动、镜头也会慢慢漂，全局基线会被这些慢变化带偏：
+   站得离镜头近一点，整段信号就整体平移，原来卡在基线上的阈值就失效了。
+   减掉 2.5 秒尺度的慢趋势后，信号回到「每次起跳绕 0 上下」的形态，
+   阈值和身高/机位/走动距离都无关。 */
+function rollingMedian(arr, win) {
+  const n = arr.length;
+  const half = Math.max(1, Math.floor(win / 2));
+  const out = new Array(n).fill(null);
+  for (let i = 0; i < n; i++) {
+    const w = [];
+    for (let j = Math.max(0, i - half); j <= Math.min(n - 1, i + half); j++) {
+      const v = arr[j];
+      if (v != null && isFinite(v)) w.push(v);
+    }
+    if (!w.length) continue;
+    w.sort((a, b) => a - b);
+    const m = w.length;
+    out[i] = m % 2 ? w[(m - 1) / 2] : (w[m / 2 - 1] + w[m / 2]) / 2;
+  }
+  return out;
+}
+
+/* 把不等间隔/低帧率的信号线性重采样到固定网格。
+   跳绳腾空段只有 0.15–0.3 秒；12fps 时 3 个采样点就横跨整个腾空段，
+   按「帧」做平滑会把峰值直接抹平。重采样到 30Hz 后，平滑窗口才固定在 0.1 秒。
+   长缺口（> maxGapSec）不插值，避免凭空造出一个假峰。 */
+function resampleUniform(vals, times, procN, procT, maxGapSec) {
+  const vt = [], vv = [];
+  for (let i = 0; i < vals.length; i++) {
+    if (vals[i] != null && isFinite(vals[i])) { vt.push(times[i]); vv.push(vals[i]); }
+  }
+  const out = new Array(procN).fill(null);
+  if (!vt.length) return out;
+  let k = 0;
+  for (let i = 0; i < procN; i++) {
+    const t = procT(i);
+    if (t < vt[0] - 1e-9 || t > vt[vt.length - 1] + 1e-9) continue;
+    while (k < vt.length - 1 && vt[k + 1] < t) k++;
+    if (t <= vt[0]) { out[i] = vv[0]; continue; }
+    if (k >= vt.length - 1) { out[i] = vv[vt.length - 1]; continue; }
+    const t0 = vt[k], t1 = vt[k + 1];
+    if (t1 - t0 > maxGapSec) continue;
+    const u = (t - t0) / (t1 - t0);
+    out[i] = vv[k] + (vv[k + 1] - vv[k]) * u;
   }
   return out;
 }
@@ -118,8 +169,11 @@ export async function analyze(video, opt = {}) {
   const step = dur / Math.max(1, n - 1);
   const sampleFps = 1 / step;
 
-  /* 和投篮分析共用同一个检测器，时间戳必须从统一游标分配 */
-  const tsBase = acquireTimeBlock(n);
+  /* 和投篮分析共用同一个检测器，时间戳必须从统一游标分配。
+     间隔用真实抽帧间隔：长视频降到 10–15fps 时，仍按 33ms 喂时间戳
+     会让 MediaPipe 的跟踪器以为帧率没变，平滑强度和实际运动对不上。 */
+  const stepMs = Math.max(4, Math.round(step * 1000));
+  const tsBase = acquireTimeBlock(n, Math.max(40, stepMs));
 
   /* 人物太小会检测不到。和投篮模块一样做两级回退：
      先整帧，失败再围绕上次髋部位置裁剪放大。跳绳要求全身入镜，
@@ -150,7 +204,7 @@ export async function analyze(video, opt = {}) {
   }
 
   function detectOnce(t, i) {
-    const ts = tsBase + Math.round(i * 33.34);
+    const ts = tsBase + i * stepMs;
     let tsOff = 0;
     const nextTs = () => ts + (tsOff++);
 
@@ -244,8 +298,43 @@ export async function analyze(video, opt = {}) {
      这样 1.5 米的小孩和 1.9 米的大人、远景和近景，阈值可以共用一套。 */
   const liftRaw = center.map(v => (v == null ? null : (centerBase - v) / scale));
   const ankleLiftRaw = ankle.map(v => (v == null ? null : (ankleBase - v) / scale));
-  const sig = smoothSignal(liftRaw);
-  const ankleSig = smoothSignal(ankleLiftRaw);
+
+  /* 计数用信号统一重采样到 30Hz。
+     低采样率时，按「帧」做的 3 点平滑会跨过整个腾空段（12fps 时约 0.25 秒），
+     把峰值抹平，长视频会成片漏计。重采样后平滑窗口固定在 0.1 秒。
+     重采样同时把 ≤0.35 秒的短缺口线性补齐；长缺口保持 null。 */
+  const PROC_FPS = 30;
+  const procN = Math.max(8, Math.round(dur * PROC_FPS) + 1);
+  const procT = i => Math.min(dur, i / PROC_FPS);
+  const times = frames.map(f => f.t);
+  const sig = smoothSignal(resampleUniform(liftRaw, times, procN, procT, 0.35));
+  const ankleSig = smoothSignal(resampleUniform(ankleLiftRaw, times, procN, procT, 0.35));
+
+  /* 去慢趋势：只保留「每次起跳」这个尺度上的起伏。
+     真实素材里人会前后走动、镜头会慢慢漂，全局基线会把站立和起跳的
+     差距吃掉 —— 实测 30 秒内漂移 6% 画面高度就能漏计三成。 */
+  const trendWin = Math.max(5, Math.round(PROC_FPS * 2.5));
+  const sigTrend = rollingMedian(sig, trendWin);
+  const sigDet = sig.map((v, i) => (v == null || sigTrend[i] == null ? null : v - sigTrend[i]));
+
+  /* 稳健幅度：用 |去趋势信号| 的 90 分位，而不是原始信号的 95 分位。
+     95 分位会被一次特别高的起跳（或一次镜头抖）拉高，阈值跟着抬高，
+     后面所有正常起跳都被判成「不够高」。 */
+  const devAbs = sigDet.filter(v => v != null && isFinite(v)).map(v => Math.abs(v));
+  const amp = pct(devAbs, 0.90);
+  if (amp == null || amp <= 0) throw new Error('没有检测到明显的纵向起伏，请确认视频里确实在跳绳');
+
+  /* 估计「静止时的 landmark 抖动」：二阶差分的绝对值。
+     动作信号是平滑的，二阶差分很小；噪声的二阶差分约等于 1.65σ。
+     用中位数而不是均值，避免把真正的起跳算进噪声里。
+     阈值至少要是噪声的 3 倍，否则「站着不动」也能被数出几十次。 */
+  const d2 = [];
+  for (let i = 1; i < sigDet.length - 1; i++) {
+    const a = sigDet[i - 1], b = sigDet[i], c = sigDet[i + 1];
+    if (a == null || b == null || c == null) continue;
+    d2.push(Math.abs(a - 2 * b + c));
+  }
+  const noiseEst = d2.length ? (pct(d2, 0.5) || 0) / 1.65 : 0;
 
   /* ---------------- 峰值检测 ----------------
      不依赖「信号必须先落回 0」：快速连跳时，两次起跳之间脚只着地一两帧，
@@ -253,79 +342,93 @@ export async function analyze(video, opt = {}) {
        - 峰值本身要高于 enter；
        - 峰前/峰后一个窗口内要有明显的低点（突出度），挡掉噪声小鼓包；
        - 峰后必须真的往下掉，说明人已经落地，不是一直举着；
-       - 两次峰至少隔 minGap，防止同一次起跳被数两下。 */
-  const amp = pct(sig, 0.95);
-  if (amp == null || amp <= 0) throw new Error('没有检测到明显的纵向起伏，请确认视频里确实在跳绳');
-
-  const enter = Math.max(0.006, amp * 0.30);
-  const fps = sampleFps;
-  const minGap = Math.max(2, Math.round(fps * 0.16));
-  const win = Math.max(2, Math.round(fps * 0.20));
-  const dropFrames = Math.max(3, Math.round(fps * 1.2));
+       - 两次峰至少隔 minGap，防止同一次起跳被数两下。
+     阈值全部相对「本次分析自己的幅度」定，不写死厘米数：
+     跳 2cm 和跳 10cm 的人，用的是同一套相对判据。 */
+  const enter = Math.max(0.0035, noiseEst * 3.0, amp * 0.28);
+  const minGap = Math.max(2, Math.round(PROC_FPS * 0.18));
+  const win = Math.max(2, Math.round(PROC_FPS * 0.30));
+  const dropFrames = Math.max(3, Math.round(PROC_FPS * 1.0));
 
   const cands = [];
-  for (let i = 0; i < sig.length; i++) {
-    const v = sig[i];
+  for (let i = 1; i < sigDet.length - 1; i++) {
+    const v = sigDet[i];
     if (v == null || !isFinite(v) || v < enter) continue;
 
-    /* 局部极大：允许平台（相等）只取第一帧，后面靠 minGap 合并 */
-    if (i > 0 && sig[i - 1] != null && v < sig[i - 1]) continue;
-    if (i < sig.length - 1 && sig[i + 1] != null && v < sig[i + 1]) continue;
+    /* 严格局部极大。补洞之后这里只剩「长缺口」两侧的 null，
+       遇到 null 直接跳过，避免把上升沿当成峰。 */
+    const prev = sigDet[i - 1], next = sigDet[i + 1];
+    if (prev == null || next == null) continue;
+    if (v < prev || v < next) continue;
 
     let lo = v;
-    for (let j = Math.max(0, i - win); j <= Math.min(sig.length - 1, i + win); j++) {
-      if (sig[j] != null && sig[j] < lo) lo = sig[j];
+    for (let j = Math.max(0, i - win); j <= Math.min(sigDet.length - 1, i + win); j++) {
+      if (sigDet[j] != null && sigDet[j] < lo) lo = sigDet[j];
     }
     const prom = v - lo;
-    if (prom < enter * 0.85) continue;
+    if (prom < Math.max(enter * 0.55, amp * 0.16)) continue;
 
     /* 峰后要往下掉：说明这是一次完整起跳，而不是信号一直挂在高位 */
     let dropped = false;
-    const needDrop = Math.max(enter * 0.5, prom * 0.45);
-    for (let j = i + 1; j <= Math.min(sig.length - 1, i + dropFrames); j++) {
-      if (sig[j] != null && sig[j] <= v - needDrop) { dropped = true; break; }
+    const needDrop = Math.max(enter * 0.45, prom * 0.35);
+    for (let j = i + 1; j <= Math.min(sigDet.length - 1, i + dropFrames); j++) {
+      if (sigDet[j] != null && sigDet[j] <= v - needDrop) { dropped = true; break; }
     }
     if (!dropped) continue;
 
-    cands.push({ i, t: frames[i].t, amp: v, prom: prom });
+    /* amp 保留原始抬升值给曲线画点用，peak 是去趋势后的幅度给筛选用 */
+    cands.push({ i, t: procT(i), amp: sig[i] == null ? v : sig[i], peak: v, prom: prom });
   }
 
   if (!cands.length) throw new Error('没有识别到完整的起跳周期：请用固定机位、全身入镜的视频');
 
-  /* 合并过近的候选：0.16 秒内只保留幅度更大的那个 */
+  /* 合并过近的候选：0.18 秒内只保留幅度更大的那个 */
   cands.sort((a, b) => a.t - b.t);
   const merged = [];
   for (const c of cands) {
     const last = merged[merged.length - 1];
-    if (last && c.t - last.t < minGap / fps) {
-      if (c.amp > last.amp) merged[merged.length - 1] = c;
+    if (last && c.t - last.t < minGap / PROC_FPS) {
+      if (c.peak > last.peak) merged[merged.length - 1] = c;
     } else {
       merged.push(c);
     }
   }
 
   /* 幅度太小的候选多半是走路/抖动；但保留「偏低」的，后面标成断绳/幅度骤降 */
-  const medAmp = pct(merged.map(c => c.amp), 0.5);
-  const minAmp = Math.max(enter * 1.05, medAmp * 0.14);
-  const kept = merged.filter(c => c.amp >= minAmp);
+  const medPeak = pct(merged.map(c => c.peak), 0.5);
+  const minPeak = Math.max(enter * 0.80, medPeak * 0.12);
+  const kept = merged.filter(c => c.peak >= minPeak);
   if (!kept.length) throw new Error('检测到的起伏太弱，可能是人物太小或跳绳离地不明显');
 
   /* 峰值附近的脚踝最高点 = 这次起跳的离地高度。
-     主信号是肩髋中点，腿收起时脚踝会比躯干升得更多，所以单独取脚踝。 */
+     主信号是肩髋中点，腿收起时脚踝会比躯干升得更多，所以单独取脚踝。
+     基线不能用全片一个固定值：人走近镜头、镜头慢慢漂，都会让「站着」
+     在画面里的位置整体移动。改成每次起跳前后 1.5 秒内脚踝的低分位，
+     相当于「这一跳附近的地面」。 */
   const jumps = kept.map((c, idx) => {
     let h = null;
-    const lo = Math.max(0, c.i - Math.round(fps * 0.12));
-    const hi = Math.min(ankleSig.length - 1, c.i + Math.round(fps * 0.12));
-    for (let j = lo; j <= hi; j++) {
+    const plo = Math.max(0, c.i - Math.round(PROC_FPS * 0.15));
+    const phi = Math.min(ankleSig.length - 1, c.i + Math.round(PROC_FPS * 0.15));
+    for (let j = plo; j <= phi; j++) {
       if (ankleSig[j] != null && (h == null || ankleSig[j] > h)) h = ankleSig[j];
     }
-    const heightCm = h == null ? null : round(h * cmPerUnit, 1);
+
+    const blo = Math.max(0, c.i - Math.round(PROC_FPS * 1.5));
+    const bhi = Math.min(ankleSig.length - 1, c.i + Math.round(PROC_FPS * 1.5));
+    const around = [];
+    for (let j = blo; j <= bhi; j++) {
+      if (ankleSig[j] != null && isFinite(ankleSig[j])) around.push(ankleSig[j]);
+    }
+    const localBase = around.length >= 3 ? pct(around, 0.25) : ankleBase;
+
+    const heightCm = (h == null || localBase == null) ? null : round((h - localBase) * cmPerUnit, 1);
     return {
       id: idx + 1,
       i: c.i,
       t: round(c.t, 3),
       tRel: round(c.t / dur, 4),
       amp: c.amp,
+      peak: c.peak,
       heightCm: heightCm != null && heightCm >= 0 && heightCm <= 60 ? heightCm : null,
       low: false
     };
@@ -343,7 +446,8 @@ export async function analyze(video, opt = {}) {
   const medHeight = pct(jumps.map(j => j.heightCm), 0.5);
   jumps.forEach(j => {
     /* 幅度低于本段中位数一半：动作明显变小，标出来但不直接删掉 */
-    j.low = medAmp != null && j.amp < medAmp * 0.45;
+    j.low = medPeak != null && j.peak < medPeak * 0.45;
+    delete j.peak;
     j.interval = j.id > 1 ? round(j.t - jumps[j.id - 2].t, 3) : null;
   });
 
@@ -421,16 +525,22 @@ export async function analyze(video, opt = {}) {
   if (fullBodyRatio < 0.75) {
     warnings.push('脚踝或肩部有 ' + Math.round((1 - fullBodyRatio) * 100) + '% 的帧没被稳定识别，计数可能漏。');
   }
-  if (sampleFps < 12) {
-    warnings.push('视频较长，采样率只有 ' + round(sampleFps, 1) + 'fps，快速连跳可能漏计。');
+  if (sampleFps < 15) {
+    warnings.push('视频较长，采样率只有 ' + round(sampleFps, 1) + 'fps，快速连跳可能漏计；建议分段拍摄。');
   }
 
-  /* ---------------- 显示用数据 ---------------- */
-  const curve = frames.map((f, i) => ([
-    round(f.t, 3),
-    sig[i] == null ? null : round(sig[i], 4),
-    ankleSig[i] == null ? null : round(ankleSig[i], 4)
-  ]));
+  /* ---------------- 显示用数据 ----------------
+     曲线和计数用同一份 30Hz 信号，保证曲线上的峰值圆点和波形对齐；
+     长视频抽稀到约 1800 点，画布和内存都不用扛几万个点。 */
+  const curveStep = Math.max(1, Math.ceil(procN / 1800));
+  const curve = [];
+  for (let i = 0; i < procN; i += curveStep) {
+    curve.push([
+      round(procT(i), 3),
+      sig[i] == null ? null : round(sig[i], 4),
+      ankleSig[i] == null ? null : round(ankleSig[i], 4)
+    ]);
+  }
 
   /* 骨骼包：空帧用前一帧补，播放时骨架不闪断 */
   const bundle = [];
@@ -458,7 +568,7 @@ export async function analyze(video, opt = {}) {
       scale: round(scale, 4),
       baseline: round(centerBase, 4),
       ankleBaseline: round(ankleBase, 4),
-      threshold: round(enter, 4),
+      threshold: round((pct(sigTrend, 0.5) || 0) + enter, 4),
       subjectPx: subjectPx,
       subjectRatio: vh > 0 ? round(subjectPx / vh, 2) : 0,
       smallSubject: subjectPx > 0 && subjectPx < vh * 0.40,

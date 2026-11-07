@@ -30,7 +30,7 @@ window.BB = window.BB || {};
      切换只加/去 .view-off 类，不碰卡片自己的 hidden ——
      prob/arc 卡的显隐由数据有无决定，归 updateAll 管。 */
   var VIEWS = ['analyze', 'compare', 'zone'];
-  /* 一级导航：运动项目。跳绳/俯卧撑目前只有占位页 */
+  /* 一级导航：运动项目。跳绳已实现，俯卧撑仍是占位页 */
   var PROJECTS = ['basketball', 'rope', 'pushup'];
 
   function currentHash() {
@@ -118,6 +118,13 @@ window.BB = window.BB || {};
        否则跳绳页底部会挂一条空的毛玻璃带 */
     var blur = document.querySelector('.bottom-blur');
     if (blur) blur.hidden = !isBB;
+
+    /* 跳绳页有自己的视频、时间轴和画布：切过去才量尺寸/重绘，
+       切走就暂停，别在看不见的地方继续播 */
+    if (BB.Rope) {
+      if (proj === 'rope') BB.Rope.onShow();
+      else BB.Rope.onHide();
+    }
 
     if (isBB) {
       setView(currentHashView());
@@ -1342,7 +1349,7 @@ window.BB = window.BB || {};
       }
     }
 
-    /* 项目导航：跳绳/俯卧撑是占位页，切过去只看外观，不碰任何分析流程 */
+    /* 项目导航：跳绳有自己的分析流程，俯卧撑仍是占位页 */
     document.querySelectorAll('.project-tab').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-project');
@@ -1357,6 +1364,13 @@ window.BB = window.BB || {};
 
     document.addEventListener('keydown', function (e) {
       if (e.target.tagName === 'INPUT') return;
+      /* 跳绳页有自己的视频和时间轴，键盘快捷键跟着当前项目走 */
+      if (state.project === 'rope' && BB.Rope) {
+        if (e.code === 'Space') { e.preventDefault(); BB.Rope.toggle(); }
+        if (e.code === 'ArrowLeft') { e.preventDefault(); BB.Rope.step(-1); }
+        if (e.code === 'ArrowRight') { e.preventDefault(); BB.Rope.step(1); }
+        return;
+      }
       if (e.code === 'Space') { e.preventDefault(); BB.VideoPlayer.toggle(); }
       if (e.code === 'ArrowLeft') { e.preventDefault(); BB.VideoPlayer.step(-1); }
       if (e.code === 'ArrowRight') { e.preventDefault(); BB.VideoPlayer.step(1); }
@@ -1374,6 +1388,7 @@ window.BB = window.BB || {};
     renderStars();
     initVideo();
     initEngine();
+    if (BB.Rope) BB.Rope.init();
     initQuoteLayer();
     renderDataset();
     if (BB.Zone) {

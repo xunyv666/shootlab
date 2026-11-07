@@ -122,7 +122,16 @@ function fetchModel() {
    所以用一个只增不减的游标，每次分析占一段新的时间片。 */
 let tsCursor = 0;
 
-function loadDetector() {
+/* 其他分析模块（如跳绳）也共用同一个 PoseLandmarker。
+   VIDEO 模式要求时间戳跨调用单调递增，所以时间片必须从这里统一分配，
+   不能让各模块各自从 0 开始数。 */
+export function acquireTimeBlock(count, gapMs = 40) {
+  const base = tsCursor;
+  tsCursor += Math.max(1, count) * gapMs + 1000;
+  return base;
+}
+
+export function loadDetector() {
   if (detector) return Promise.resolve(detector);
   if (detectorPromise) return detectorPromise;
   detectorPromise = (async () => {
@@ -386,7 +395,7 @@ function frameGeom(pts, side, ar) {
 
 /* ---------------- 视频取帧 ---------------- */
 
-function seekTo(video, t) {
+export function seekTo(video, t) {
   const target = Math.max(0, Math.min(t, Math.max(0, video.duration - 0.03)));
   if (Math.abs(video.currentTime - target) < 0.004 && video.readyState >= 2) {
     return Promise.resolve();
@@ -647,8 +656,7 @@ export async function analyze(video, opt = {}) {
   const n = Math.max(24, Math.min(MAX_SAMPLES, Math.round(dur * SAMPLE_FPS)));
   const step = dur / Math.max(1, n - 1);
   /* 本次分析独占 [tsBase, tsBase + n*40)，下一次从后面接着走 */
-  const tsBase = tsCursor;
-  tsCursor += n * 40 + 1000;
+  const tsBase = acquireTimeBlock(n);
 
   /* —— 1. 逐帧跑姿态 —— */
 

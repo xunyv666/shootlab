@@ -2070,3 +2070,148 @@ td.c-score b { font-size: 13px; }
   line-height: 1.65;
   color: var(--text-3);
 }
+
+/* ============================================================
+ * 跳绳计数
+ * 复用篮球的卡片/时间轴/控制条骨架，只补跳绳自己的布局与标记。
+ * ============================================================ */
+
+.rope-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rope-metrics .m-val { font-size: 34px; }
+.rope-metrics .m-sub { min-height: 17px; }
+
+.rope-chart-wrap {
+  height: 238px;
+  padding: 8px 8px 6px;
+}
+.rope-chart-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 跳跃记录：和出手记录同一张表，但行更矮、列更少 */
+.rope-table-wrap { max-height: 280px; }
+.rope-table td { padding: 7px 8px; }
+.rope-table tbody tr.active td { color: #9a3412; }
+.tag-low, .tag-gap {
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.tag-low { background: var(--amber-soft); color: var(--amber); }
+.tag-gap { background: #f4f6f9; color: var(--text-3); }
+
+/* 时间轴：橙色 = 正常起跳，琥珀 = 幅度偏低；浅色带 = 停顿/骤降区间 */
+.mark.jump { background: var(--orange); }
+.mark.jump-low { background: var(--amber); }
+.rope-break-band {
+  position: absolute;
+  top: 7px;
+  height: 10px;
+  border-radius: 3px;
+  background: rgba(217, 119, 6, .14);
+  pointer-events: none;
+}
+.rope-break-band.is-low { background: rgba(220, 38, 38, .12); }
+
+/* 小结 */
+.rope-sum-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rope-sum-body { padding: 14px 18px 18px; }
+.rope-verdict {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-2);
+}
+.rope-break-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.rope-break-list > b {
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-weight: 650;
+  letter-spacing: .02em;
+}
+.rope-break-item {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fbfcfe;
+  border-radius: 8px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  color: var(--text-2);
+  font-size: 12px;
+  transition: all .14s ease;
+}
+.rope-break-item:hover { border-color: #ffd9b8; background: var(--orange-soft); }
+.rope-break-item i {
+  font-style: normal;
+  font-size: 10.5px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rope-more { margin-top: 4px; font-size: 11px; color: var(--text-3); }
+.rope-warn {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rope-warn li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+.rope-warn li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+/* 拍摄建议 */
+.rope-tips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  padding: 14px 18px 10px;
+}
+.rope-tip { display: flex; flex-direction: column; gap: 3px; }
+.rope-tip b { font-size: 12.5px; color: var(--text); }
+.rope-tip span { font-size: 11.5px; color: var(--text-3); line-height: 1.6; }
+.rope-privacy {
+  margin: 4px 18px 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+@media (max-width: 780px) {
+  .rope-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rope-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rope-tips { grid-template-columns: 1fr; }
+  .rope-chart-wrap { height: 200px; }
+}
+@media (max-width: 420px) {
+  .rope-metrics { grid-template-columns: 1fr; }
+  .rope-metrics .m-val { font-size: 30px; }
+}

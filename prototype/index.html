@@ -34,7 +34,7 @@
   </div>
 </header>
 
-<!-- 一级导航：运动项目。跳绳 / 俯卧撑先占位，功能未实现 -->
+<!-- 一级导航：运动项目。跳绳已实现，俯卧撑先占位 -->
 <nav class="projects" id="projectTabs" aria-label="运动项目">
   <button class="project-tab active" data-project="basketball">篮球投篮</button>
   <button class="project-tab" data-project="rope">跳绳计数</button>
@@ -253,34 +253,146 @@
   <span class="view-ink no-anim" id="viewInk" aria-hidden="true"></span>
 </nav>
 
-<!-- ===== 跳绳：占位页（功能未实现，先立结构） ===== -->
-<section class="soon" id="ropePane" hidden>
-  <div class="soon-card">
-    <div class="soon-icon">
-      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
-        <circle cx="6" cy="4.2" r="1.7"></circle>
-        <circle cx="18" cy="4.2" r="1.7"></circle>
-        <path d="M6 5.9v7.1a6 6 0 0 0 12 0V5.9"></path>
-      </svg>
+<!-- ===== 跳绳计数 ===== -->
+<section class="layout rope-layout" id="ropePane" hidden>
+
+  <!-- 左列：视频 + 跳跃记录 -->
+  <section class="col col-left">
+
+    <div class="card video-card rope-video-card">
+      <div class="card-head">
+        <h2>跳绳视频</h2>
+        <div class="head-tools">
+          <span class="badge" id="ropeBadge">等待视频</span>
+          <label class="height-field" title="填了身高才能把像素换算成厘米">
+            身高
+            <input id="ropeHeight" type="number" min="100" max="225" step="1" value="170" />
+            <span>cm</span>
+          </label>
+          <button class="btn btn-sm" id="ropeChangeBtn" type="button" title="选择另一段跳绳视频" hidden>更换视频</button>
+          <input type="file" id="ropeFile" accept="video/*" hidden />
+        </div>
+      </div>
+
+      <div class="stage" id="ropeStage">
+        <video id="ropeVideo" playsinline muted></video>
+        <canvas id="ropeOverlay"></canvas>
+
+        <div class="drop" id="ropeDrop">
+          <div class="drop-art">
+            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
+              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
+              <path d="M30 18c0 26 60 26 60 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".75"/>
+              <circle cx="30" cy="15" r="3.2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="90" cy="15" r="3.2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="60" cy="40" r="5.4" stroke="currentColor" stroke-width="2"/>
+              <path d="M60 45.5v12M60 57.5l-7 10M60 57.5l7 10M60 49l-9 5M60 49l9 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M60 68v6M57 71l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".65"/>
+            </svg>
+          </div>
+          <h3>拖一段跳绳视频进来</h3>
+          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
+          <div class="drop-steps">
+            <span><b>1</b>选择视频</span>
+            <i></i>
+            <span><b>2</b>逐帧识别人体</span>
+            <i></i>
+            <span><b>3</b>次数与节奏</span>
+          </div>
+          <label class="btn btn-primary btn-lg" for="ropeFile">选一个跳绳视频</label>
+          <p class="drop-tip"><b>固定机位、全身入镜</b> · 人物占画面高度一半以上 · 跳绳离地 3–10cm，太远会测不出来</p>
+          <p class="engine-hint" id="ropeHint" hidden></p>
+        </div>
+
+        <div class="analysing" id="ropeAnalysing" hidden>
+          <div class="an-box">
+            <div class="an-head"><b id="ropeAnTitle">正在分析</b><span id="ropeAnPct">0%</span></div>
+            <div class="an-track"><i id="ropeAnBar"></i></div>
+            <p class="an-text" id="ropeAnText">正在加载姿态模型…</p>
+          </div>
+        </div>
+
+        <span class="stage-chip" id="ropeStageChip" hidden></span>
+        <span class="frame-badge" id="ropeFrameBadge" hidden></span>
+      </div>
+
+      <div class="track" id="ropeTrack" hidden>
+        <div class="track-bar"></div>
+        <div class="track-fill" id="ropeTrackFill"></div>
+        <div class="track-marks" id="ropeTrackMarks"></div>
+        <div class="track-head" id="ropeTrackHead"></div>
+      </div>
+
+      <div class="live" id="ropeLive" hidden>
+        <span class="live-t" id="ropeLiveT">0.00s</span>
+        <span class="live-shot" id="ropeLiveJump">—</span>
+        <span class="live-vals" id="ropeLiveVals"></span>
+      </div>
+
+      <div class="controls" id="ropeControls" hidden>
+        <button class="btn btn-icon" id="ropeBtnPrev" title="上一帧（←）">&#10216;</button>
+        <button class="btn btn-play" id="ropeBtnPlay" title="播放 / 暂停（空格）">&#9654;</button>
+        <button class="btn btn-icon" id="ropeBtnNext" title="下一帧（→）">&#10217;</button>
+        <span class="divider"></span>
+        <div class="speeds" id="ropeSpeeds"></div>
+        <span class="spacer"></span>
+        <span class="time" id="ropeTime">0.00s</span>
+      </div>
+      <p class="shortcut" id="ropeShortcut" hidden>空格 播放/暂停 · ←→ 逐帧 · 点击时间轴跳转 · 点记录行跳到那一次</p>
     </div>
-    <div class="soon-head">
-      <h2>跳绳计数</h2>
-      <span class="soon-tag">开发中</span>
+
+    <div class="card table-card" id="ropeLogCard" hidden>
+      <div class="card-head">
+        <h2>跳跃记录</h2>
+        <span class="sub" id="ropeLogSub"></span>
+      </div>
+      <div class="table-wrap rope-table-wrap">
+        <table class="shot-table rope-table">
+          <thead>
+            <tr>
+              <th class="c-idx">#</th>
+              <th>时间</th>
+              <th>间隔</th>
+              <th>跳高</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody id="ropeLogRows"></tbody>
+        </table>
+      </div>
     </div>
-    <p class="soon-desc">
-      用同一套姿态识别，把每一次起跳切出来计数。不只是数个数，还要看节奏稳不稳。
-    </p>
-    <ul class="soon-list">
-      <li><b>总次数 · 每分钟次数</b><span>按起跳周期识别，带最小间隔约束防重复计数</span></li>
-      <li><b>单次跳跃高度</b><span>由脚踝与髋部抬升换算，按身高归一化</span></li>
-      <li><b>节奏一致性</b><span>统计每次间隔的波动，跳得乱会看得出来</span></li>
-      <li><b>断绳识别</b><span>起跳缺失或幅度骤降时单独标出</span></li>
-    </ul>
-    <p class="soon-tip">
-      <b>拍摄要求</b>：固定机位，全身入镜，人物占画面高度一半以上。跳绳离地 3–10cm，
-      远景里只有几个像素，测不出来。
-    </p>
-  </div>
+
+  </section>
+
+  <!-- 右列：指标 + 小结 + 节奏曲线 -->
+  <section class="col col-right">
+
+    <div class="metrics rope-metrics" id="ropeMetrics"></div>
+
+    <div class="card rope-sum-card" id="ropeSummary"></div>
+
+    <div class="card rope-chart-card">
+      <div class="card-head">
+        <h2>纵向节奏</h2>
+        <span class="sub">肩髋中点位移 · 归一化为身体比例</span>
+      </div>
+      <div class="rope-chart-wrap">
+        <canvas id="ropeChart" aria-label="跳绳纵向节奏曲线"></canvas>
+      </div>
+    </div>
+
+    <div class="card rope-tips-card">
+      <div class="card-head"><h2>怎么拍更准</h2></div>
+      <div class="rope-tips">
+        <div class="rope-tip"><b>固定机位</b><span>手机放支架上，别手持跟拍。镜头一晃，纵向信号就被当成起跳。</span></div>
+        <div class="rope-tip"><b>全身入镜</b><span>头顶到脚踝都要在画面里，脚踝出画就量不到离地高度。</span></div>
+        <div class="rope-tip"><b>人占一半以上</b><span>跳绳离地只有几厘米，人在画面里太小时，像素变化会被噪声吃掉。</span></div>
+        <div class="rope-tip"><b>正侧或正面都行</b><span>算法看的是纵向位移，不依赖左右朝向；但侧拍时别让人前后走出画面。</span></div>
+      </div>
+      <p class="rope-privacy">视频不会上传。姿态识别用 MediaPipe Pose，模型随页面加载到本地运行。</p>
+    </div>
+
+  </section>
 </section>
 
 <!-- ===== 俯卧撑：占位页（功能未实现，先立结构） ===== -->
@@ -416,13 +528,16 @@
 <script src="js/charts.js"></script>
 <script src="js/suggestion.js"></script>
 <script src="js/coach.js"></script>
+<script src="js/rope.js"></script>
 <script src="js/app.js"></script>
 
 <!-- 分析引擎是 ES 模块（内含 MediaPipe wasm 运行时），必须经 http(s) 打开 -->
 <script type="module">
   import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
+  import * as RopeEngine from './js/rope-engine.js';
   window.BB = window.BB || {};
   window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady };
+  window.BB.RopeEngine = RopeEngine;
   document.documentElement.classList.add('engine-ready');
 </script>
 </body>

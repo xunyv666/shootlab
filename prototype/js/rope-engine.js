@@ -97,9 +97,16 @@ function frameSignal(pts) {
 export async function analyze(video, opt = {}) {
   const onProgress = opt.onProgress || (() => {});
   const heightCm = opt.heightCm || 170;
+  /* 用户中途换视频时，旧分析必须尽快停手：
+     它和新分析共用同一个 <video> 元素，继续跑会把两段画面混在一起 */
+  const signal = opt.signal;
+  const throwIfAborted = () => {
+    if (signal && signal.aborted) throw new Error('分析已取消');
+  };
 
   onProgress('正在加载姿态模型…', 0.02);
   const det = await loadDetector();
+  throwIfAborted();
 
   const dur = video.duration;
   if (!isFinite(dur) || dur <= 0) throw new Error('视频时长无效，可能是编码不被浏览器支持');
@@ -194,8 +201,10 @@ export async function analyze(video, opt = {}) {
 
   const frames = [];
   for (let i = 0; i < n; i++) {
+    throwIfAborted();
     const t = i * step;
     await seekTo(video, t);
+    throwIfAborted();
     frames.push(detectOnce(t, i));
     if (i % 2 === 0) onProgress('正在逐帧识别人体骨骼… ' + (i + 1) + '/' + n, 0.05 + 0.7 * (i + 1) / n);
     await new Promise(r => setTimeout(r, 0));   // 让出主线程，进度条才动得起来

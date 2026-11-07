@@ -662,6 +662,8 @@ window.BB = window.BB || {};
     if (panel) panel.hidden = true;
     var badge = $('ropeBadge');
     if (badge) { badge.textContent = '已分析'; badge.classList.add('real'); }
+    var change = $('ropeChangeBtn');
+    if (change) change.hidden = false;
 
     var stage = $('ropeStage');
     if (stage) stage.classList.add('has-video');
@@ -719,6 +721,8 @@ window.BB = window.BB || {};
     if (marks) marks.innerHTML = '';
     var badge = $('ropeBadge');
     if (badge) { badge.textContent = '分析中'; badge.classList.remove('real'); }
+    var change = $('ropeChangeBtn');
+    if (change) change.hidden = false;
 
     renderMetrics(null);
     renderSummary(null);
@@ -733,6 +737,10 @@ window.BB = window.BB || {};
     /* 每次分析领一个号：用户连续换视频时，旧分析晚到的结果不能覆盖新结果 */
     var myId = (R.analysisId || 0) + 1;
     R.analysisId = myId;
+    /* 同时通知旧分析停手，别让它继续读已经被换掉的 <video> */
+    if (R.analysisAbort) R.analysisAbort.abort();
+    var abort = new AbortController();
+    R.analysisAbort = abort;
 
     if (R.url) { URL.revokeObjectURL(R.url); R.url = null; }
     R.url = URL.createObjectURL(file);
@@ -765,6 +773,7 @@ window.BB = window.BB || {};
         heightCm: height(),
         subject: (file.name || '跳绳视频').replace(/\.[^.]+$/, ''),
         source: '本地上传',
+        signal: abort.signal,
         onProgress: function (text, ratio) {
           if (myId !== R.analysisId) return;
           showAnalyse(ratio, '正在分析', text);
@@ -843,9 +852,12 @@ window.BB = window.BB || {};
     var file = $('ropeFile');
     if (file) file.addEventListener('change', function (e) {
       var f = e.target.files && e.target.files[0];
+      /* 清空 value：同一个文件改完再选一次也会触发 change */
       e.target.value = '';
       startAnalyze(f);
     });
+    var changeBtn = $('ropeChangeBtn');
+    if (changeBtn) changeBtn.addEventListener('click', function () { file.click(); });
 
     var stage = $('ropeStage');
     if (stage) {

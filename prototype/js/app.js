@@ -30,8 +30,8 @@ window.BB = window.BB || {};
      切换只加/去 .view-off 类，不碰卡片自己的 hidden ——
      prob/arc 卡的显隐由数据有无决定，归 updateAll 管。 */
   var VIEWS = ['analyze', 'compare', 'zone'];
-  /* 一级导航：运动项目。跳绳已实现，俯卧撑仍是占位页 */
-  var PROJECTS = ['basketball', 'rope', 'pushup'];
+  /* 一级导航：运动项目。跳绳已实现，俯卧撑与立定跳远仍是占位页 */
+  var PROJECTS = ['basketball', 'rope', 'pushup', 'longjump'];
 
   function currentHash() {
     return (location.hash || '').replace(/^#/, '');
@@ -39,7 +39,7 @@ window.BB = window.BB || {};
 
   function currentProject() {
     var h = currentHash();
-    return (h === 'rope' || h === 'pushup') ? h : 'basketball';
+    return PROJECTS.indexOf(h) >= 0 ? h : 'basketball';
   }
 
   function currentHashView() {
@@ -100,7 +100,13 @@ window.BB = window.BB || {};
     var proj = currentProject();
     state.project = proj;
 
-    var panes = { basketball: $('bbPane'), rope: $('ropePane'), pushup: $('pushupPane') };
+    /* 加新项目时这里要跟着加一条，否则 pane 永远 hidden */
+    var panes = {
+      basketball: $('bbPane'),
+      rope: $('ropePane'),
+      pushup: $('pushupPane'),
+      longjump: $('longjumpPane')
+    };
     Object.keys(panes).forEach(function (k) {
       if (panes[k]) panes[k].hidden = (k !== proj);
     });

@@ -39,6 +39,7 @@
   <button class="project-tab active" data-project="basketball">篮球投篮</button>
   <button class="project-tab" data-project="rope">跳绳计数</button>
   <button class="project-tab" data-project="pushup">俯卧撑</button>
+  <button class="project-tab" data-project="longjump">立定跳远</button>
 </nav>
 
 <main class="layout" id="bbPane">
@@ -421,6 +422,40 @@
     </ul>
     <p class="soon-tip">
       <b>拍摄要求</b>：侧面机位，要能拍到肩到脚整条线。正对着拍看不到塌腰，也量不出深度。
+    </p>
+  </div>
+</section>
+
+<!-- ===== 立定跳远：占位页（功能未实现，先立结构） ===== -->
+<section class="soon" id="longjumpPane" hidden>
+  <div class="soon-card">
+    <div class="soon-icon">
+      <svg viewBox="0 0 34 22" width="38" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11.9" cy="4.6" r="2.2"></circle>
+        <path d="M12.3 7 L15.7 11.2"></path>
+        <path d="M13.1 7.9 L19.5 4.9"></path>
+        <path d="M15.7 11.2 L22.5 12.6"></path>
+        <path d="M15.7 11.2 L12.7 15.4"></path>
+        <path d="M2 17.8 H32" stroke-width="1.5"></path>
+        <path d="M6 17.8 V20 M12 17.8 V20 M18 17.8 V20 M24 17.8 V20 M30 17.8 V20" stroke-width="1.2" opacity="0.45"></path>
+      </svg>
+    </div>
+    <div class="soon-head">
+      <h2>立定跳远</h2>
+      <span class="soon-tag">开发中</span>
+    </div>
+    <p class="soon-desc">
+      跳了多远只是结果。起跳角度、摆臂时机、落地有没有后退，才是能改的部分。
+    </p>
+    <ul class="soon-list">
+      <li><b>跳跃距离</b><span>先用画面里的标尺或身高换算比例尺，逐次给出距离</span></li>
+      <li><b>起跳角 · 蹬伸时序</b><span>髋膝踝三个关节的展开顺序，早伸或晚伸都跳不远</span></li>
+      <li><b>摆臂是否配合</b><span>手臂前摆的峰值有没有和蹬地时刻对上</span></li>
+      <li><b>落地稳定性</b><span>落地瞬间重心横向偏移，后退或手撑地会被标出来</span></li>
+    </ul>
+    <p class="soon-tip">
+      <b>拍摄要求</b>：正侧面机位，地面放一把卷尺或做两条标记，起跳线和落地区都要在画面里。
+      斜着拍会把距离压扁，算出来的数字没有意义。
     </p>
   </div>
 </section>

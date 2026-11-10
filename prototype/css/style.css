@@ -195,6 +195,13 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: 0 4px 12px -5px rgba(249, 115, 22, .6);
 }
 
+/* 手机宽度：四个项目按钮要在 390 里排完，不然最后一个被切掉。
+   盒宽 = 文字 + padding，文字动不了，只能收 padding 和 gap。 */
+@media (max-width: 480px) {
+  .projects { gap: 6px; padding-left: 12px; padding-right: 12px; }
+  .project-tab { font-size: 13px; padding: 8px 13px; border-radius: 9px; }
+}
+
 /* ---------------- 底部悬浮胶囊导航 ----------------
    分析 / 对比建议 / 点位概率三个视图共用一个根路径；
    hash 路由在任何部署子路径（含 file://）都不需要服务端配置。

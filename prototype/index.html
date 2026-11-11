@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>运动分析 · 篮球 / 跳绳 / 俯卧撑</title>
+<title>运动分析 · 篮球 / 跳绳 / 立定跳远</title>
 <link rel="icon" href="favicon.ico" sizes="any" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="css/style.css" />
@@ -20,7 +20,7 @@
     </div>
     <div class="brand-text">
       <h1>运动分析</h1>
-      <p>篮球投篮 · 跳绳计数 · 俯卧撑，动作数据化</p>
+      <p>篮球投篮 · 跳绳计数 · 立定跳远，动作数据化</p>
     </div>
   </div>
 
@@ -426,38 +426,166 @@
   </div>
 </section>
 
-<!-- ===== 立定跳远：占位页（功能未实现，先立结构） ===== -->
-<section class="soon" id="longjumpPane" hidden>
-  <div class="soon-card">
-    <div class="soon-icon">
-      <svg viewBox="0 0 34 22" width="38" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11.9" cy="4.6" r="2.2"></circle>
-        <path d="M12.3 7 L15.7 11.2"></path>
-        <path d="M13.1 7.9 L19.5 4.9"></path>
-        <path d="M15.7 11.2 L22.5 12.6"></path>
-        <path d="M15.7 11.2 L12.7 15.4"></path>
-        <path d="M2 17.8 H32" stroke-width="1.5"></path>
-        <path d="M6 17.8 V20 M12 17.8 V20 M18 17.8 V20 M24 17.8 V20 M30 17.8 V20" stroke-width="1.2" opacity="0.45"></path>
-      </svg>
+<!-- ===== 立定跳远 ===== -->
+<section class="layout lj-layout" id="longjumpPane" hidden>
+
+  <!-- 左列：视频 + 跳跃记录 -->
+  <section class="col col-left">
+
+    <div class="card video-card">
+      <div class="card-head">
+        <h2>跳远视频</h2>
+        <div class="head-tools">
+          <span class="badge" id="ljBadge">等待视频</span>
+          <label class="height-field" title="填了身高才能把像素换算成厘米">
+            身高
+            <input id="ljHeight" type="number" min="100" max="225" step="1" value="175" />
+            <span>cm</span>
+          </label>
+          <button class="btn btn-sm" id="ljRulerBtn" type="button"
+                  title="在画面里点出卷尺的两端，比按身高换算更准">标尺校准</button>
+          <button class="btn btn-sm" id="ljChangeBtn" type="button" title="选择另一段跳远视频" hidden>更换视频</button>
+          <input type="file" id="ljFile" accept="video/*" hidden />
+        </div>
+      </div>
+
+      <div class="stage" id="ljStage">
+        <video id="ljVideo" playsinline muted></video>
+        <canvas id="ljOverlay"></canvas>
+
+        <div class="drop" id="ljDrop">
+          <div class="drop-art">
+            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
+              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
+              <path d="M8 70 H112" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
+              <path d="M20 70 V64 M32 70 V64 M44 70 V64 M56 70 V64 M68 70 V64 M80 70 V64 M92 70 V64" stroke="currentColor" stroke-width="1.2" opacity=".3"/>
+              <circle cx="30" cy="34" r="4.6" stroke="currentColor" stroke-width="2"/>
+              <path d="M30 39 v10M30 49 l-6 8M30 49 l7 8M30 42 l-8 5M30 42 l8 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M46 30c8-10 22-13 34-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3 4" opacity=".6"/>
+              <path d="M84 17 l4 4 -5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+            </svg>
+          </div>
+          <h3>拖一段立定跳远视频进来</h3>
+          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
+          <div class="drop-steps">
+            <span><b>1</b>选择视频</span>
+            <i></i>
+            <span><b>2</b>逐帧识别人体</span>
+            <i></i>
+            <span><b>3</b>距离与起跳时序</span>
+          </div>
+          <label class="btn btn-primary btn-lg" for="ljFile">选一个跳远视频</label>
+          <p class="drop-tip"><b>正侧面机位</b> · 起跳线和落地区都要在画面里 · 地面放一把卷尺或做两条标记，距离才准</p>
+          <p class="engine-hint" id="ljHint" hidden></p>
+        </div>
+
+        <div class="analysing" id="ljAnalysing" hidden>
+          <div class="an-box">
+            <div class="an-head"><b id="ljAnTitle">正在分析</b><span id="ljAnPct">0%</span></div>
+            <div class="an-track"><i id="ljAnBar"></i></div>
+            <p class="an-text" id="ljAnText">正在加载姿态模型…</p>
+          </div>
+        </div>
+
+        <!-- 标尺校准：点画面里已知长度的两端 -->
+        <div class="lj-ruler-bar" id="ljRulerBar" hidden>
+          <span id="ljRulerTip">点画面里卷尺的左端</span>
+          <label class="lj-ruler-len">
+            实际长度
+            <input id="ljRulerLen" type="number" min="10" max="500" step="1" value="100" />
+            <span>cm</span>
+          </label>
+          <button class="btn btn-sm" id="ljRulerCancel" type="button">取消</button>
+        </div>
+
+        <span class="stage-chip" id="ljStageChip" hidden></span>
+        <span class="frame-badge" id="ljFrameBadge" hidden></span>
+      </div>
+
+      <div class="track" id="ljTrack" hidden>
+        <div class="track-bar"></div>
+        <div class="track-fill" id="ljTrackFill"></div>
+        <div class="track-marks" id="ljTrackMarks"></div>
+        <div class="track-head" id="ljTrackHead"></div>
+      </div>
+
+      <div class="live" id="ljLive" hidden>
+        <span class="live-t" id="ljLiveT">0.00s</span>
+        <span class="live-shot" id="ljLiveJump">—</span>
+        <span class="live-vals" id="ljLiveVals"></span>
+      </div>
+
+      <div class="controls" id="ljControls" hidden>
+        <button class="btn btn-icon" id="ljBtnPrev" title="上一帧（←）">&#10216;</button>
+        <button class="btn btn-play" id="ljBtnPlay" title="播放 / 暂停（空格）">&#9654;</button>
+        <button class="btn btn-icon" id="ljBtnNext" title="下一帧（→）">&#10217;</button>
+        <span class="divider"></span>
+        <div class="speeds" id="ljSpeeds"></div>
+        <span class="spacer"></span>
+        <span class="time" id="ljTime">0.00s</span>
+      </div>
+      <p class="shortcut" id="ljShortcut" hidden>空格 播放/暂停 · ←→ 逐帧 · 点击时间轴跳转 · 点记录行跳到那一跳</p>
     </div>
-    <div class="soon-head">
-      <h2>立定跳远</h2>
-      <span class="soon-tag">开发中</span>
+
+    <div class="card table-card" id="ljLogCard" hidden>
+      <div class="card-head">
+        <h2>跳跃记录</h2>
+        <span class="sub" id="ljLogSub"></span>
+      </div>
+      <div class="table-wrap lj-table-wrap">
+        <table class="shot-table lj-table">
+          <thead>
+            <tr>
+              <th class="c-idx">#</th>
+              <th>距离</th>
+              <th class="hide-sm">腾空</th>
+              <th class="hide-sm">起跳角</th>
+              <th class="c-score">评分</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody id="ljLogRows"></tbody>
+        </table>
+      </div>
     </div>
-    <p class="soon-desc">
-      跳了多远只是结果。起跳角度、摆臂时机、落地有没有后退，才是能改的部分。
-    </p>
-    <ul class="soon-list">
-      <li><b>跳跃距离</b><span>先用画面里的标尺或身高换算比例尺，逐次给出距离</span></li>
-      <li><b>起跳角 · 蹬伸时序</b><span>髋膝踝三个关节的展开顺序，早伸或晚伸都跳不远</span></li>
-      <li><b>摆臂是否配合</b><span>手臂前摆的峰值有没有和蹬地时刻对上</span></li>
-      <li><b>落地稳定性</b><span>落地瞬间重心横向偏移，后退或手撑地会被标出来</span></li>
-    </ul>
-    <p class="soon-tip">
-      <b>拍摄要求</b>：正侧面机位，地面放一把卷尺或做两条标记，起跳线和落地区都要在画面里。
-      斜着拍会把距离压扁，算出来的数字没有意义。
-    </p>
-  </div>
+
+  </section>
+
+  <!-- 右列：指标 + 小结 + 起跳时序 -->
+  <section class="col col-right">
+
+    <div class="metrics lj-metrics" id="ljMetrics"></div>
+
+    <div class="card lj-sum-card" id="ljSummary"></div>
+
+    <div class="card lj-chart-card">
+      <div class="card-head">
+        <h2>起跳时序</h2>
+        <span class="sub">髋 / 膝 / 踝伸展角 · 竖线为起跳时刻</span>
+      </div>
+      <div class="lj-legend">
+        <span><i class="k-hip"></i>髋</span>
+        <span><i class="k-knee"></i>膝</span>
+        <span><i class="k-ankle"></i>踝</span>
+        <span><i class="k-arm"></i>手臂前摆</span>
+      </div>
+      <div class="lj-chart-wrap">
+        <canvas id="ljChart" aria-label="起跳时序曲线"></canvas>
+      </div>
+    </div>
+
+    <div class="card lj-tips-card">
+      <div class="card-head"><h2>怎么拍更准</h2></div>
+      <div class="lj-tips">
+        <div class="lj-tip"><b>正侧面机位</b><span>镜头垂直对着跳跃方向。斜着拍会把距离压扁，画面里的 1 米在水平方向就不到 1 米了。</span></div>
+        <div class="lj-tip"><b>地面放卷尺</b><span>沿跳跃方向放一把卷尺，用「标尺校准」点两点。比按身高换算准得多，还能顺手校掉透视。</span></div>
+        <div class="lj-tip"><b>起跳线在画面里</b><span>起跳点按脚尖算、落地点按脚跟算，两头都在画面内才量得全。</span></div>
+        <div class="lj-tip"><b>人占一半以上</b><span>远景里脚踝只有几个像素，起跳时刻会抖，距离误差跟着放大。</span></div>
+      </div>
+      <p class="lj-privacy">视频不会上传。姿态识别用 MediaPipe Pose，模型随页面加载到本地运行。</p>
+    </div>
+
+  </section>
 </section>
 
 <div class="modal" id="modal" hidden></div>
@@ -564,15 +692,18 @@
 <script src="js/suggestion.js"></script>
 <script src="js/coach.js"></script>
 <script src="js/rope.js"></script>
+<script src="js/longjump.js"></script>
 <script src="js/app.js"></script>
 
 <!-- 分析引擎是 ES 模块（内含 MediaPipe wasm 运行时），必须经 http(s) 打开 -->
 <script type="module">
   import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
   import * as RopeEngine from './js/rope-engine.js';
+  import * as LongJumpEngine from './js/longjump-engine.js';
   window.BB = window.BB || {};
   window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady };
   window.BB.RopeEngine = RopeEngine;
+  window.BB.LongJumpEngine = LongJumpEngine;
   document.documentElement.classList.add('engine-ready');
 </script>
 </body>

@@ -30,7 +30,7 @@ window.BB = window.BB || {};
      切换只加/去 .view-off 类，不碰卡片自己的 hidden ——
      prob/arc 卡的显隐由数据有无决定，归 updateAll 管。 */
   var VIEWS = ['analyze', 'compare', 'zone'];
-  /* 一级导航：运动项目。跳绳已实现，俯卧撑与立定跳远仍是占位页 */
+  /* 一级导航：运动项目。篮球、跳绳、立定跳远已实现，俯卧撑仍是占位页 */
   var PROJECTS = ['basketball', 'rope', 'pushup', 'longjump'];
 
   function currentHash() {
@@ -126,10 +126,15 @@ window.BB = window.BB || {};
     if (blur) blur.hidden = !isBB;
 
     /* 跳绳页有自己的视频、时间轴和画布：切过去才量尺寸/重绘，
-       切走就暂停，别在看不见的地方继续播 */
+       切走就暂停，别在看不见的地方继续播。
+       立定跳远同理，两套界面互不相干，各管各的可见性。 */
     if (BB.Rope) {
       if (proj === 'rope') BB.Rope.onShow();
       else BB.Rope.onHide();
+    }
+    if (BB.LongJump) {
+      if (proj === 'longjump') BB.LongJump.onShow();
+      else BB.LongJump.onHide();
     }
 
     if (isBB) {
@@ -1355,7 +1360,7 @@ window.BB = window.BB || {};
       }
     }
 
-    /* 项目导航：跳绳有自己的分析流程，俯卧撑仍是占位页 */
+    /* 项目导航：跳绳和立定跳远各有自己的分析流程，俯卧撑仍是占位页 */
     document.querySelectorAll('.project-tab').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-project');
@@ -1370,11 +1375,17 @@ window.BB = window.BB || {};
 
     document.addEventListener('keydown', function (e) {
       if (e.target.tagName === 'INPUT') return;
-      /* 跳绳页有自己的视频和时间轴，键盘快捷键跟着当前项目走 */
+      /* 跳绳 / 立定跳远各有自己的视频和时间轴，键盘快捷键跟着当前项目走 */
       if (state.project === 'rope' && BB.Rope) {
         if (e.code === 'Space') { e.preventDefault(); BB.Rope.toggle(); }
         if (e.code === 'ArrowLeft') { e.preventDefault(); BB.Rope.step(-1); }
         if (e.code === 'ArrowRight') { e.preventDefault(); BB.Rope.step(1); }
+        return;
+      }
+      if (state.project === 'longjump' && BB.LongJump) {
+        if (e.code === 'Space') { e.preventDefault(); BB.LongJump.toggle(); }
+        if (e.code === 'ArrowLeft') { e.preventDefault(); BB.LongJump.step(-1); }
+        if (e.code === 'ArrowRight') { e.preventDefault(); BB.LongJump.step(1); }
         return;
       }
       if (e.code === 'Space') { e.preventDefault(); BB.VideoPlayer.toggle(); }
@@ -1395,6 +1406,7 @@ window.BB = window.BB || {};
     initVideo();
     initEngine();
     if (BB.Rope) BB.Rope.init();
+    if (BB.LongJump) BB.LongJump.init();
     initQuoteLayer();
     renderDataset();
     if (BB.Zone) {

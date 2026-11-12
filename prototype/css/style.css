@@ -2222,3 +2222,215 @@ td.c-score b { font-size: 13px; }
   .rope-metrics { grid-template-columns: 1fr; }
   .rope-metrics .m-val { font-size: 30px; }
 }
+
+/* ============================================================
+ * 立定跳远
+ * 和跳绳一样复用篮球的卡片 / 时间轴 / 控制条骨架，
+ * 只补自己的指标网格、时序图、标尺校准层和记录表标记。
+ * ============================================================ */
+
+.lj-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lj-metrics .m-val { font-size: 34px; }
+.lj-metrics .m-sub { min-height: 17px; }
+
+.lj-chart-wrap {
+  height: 244px;
+  padding: 4px 8px 6px;
+}
+.lj-chart-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 图例：颜色只在这四个点上出现，和画布里的线一一对应 */
+.lj-legend {
+  display: flex;
+  gap: 16px;
+  padding: 2px 18px 0;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.lj-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.lj-legend i {
+  width: 12px;
+  height: 2.5px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.lj-legend .k-hip { background: #f97316; }
+.lj-legend .k-knee { background: #16a34a; }
+.lj-legend .k-ankle { background: #2563eb; }
+.lj-legend .k-arm { background: #94a3b8; height: 1.6px; }
+
+/* 跳跃记录 */
+.lj-table-wrap { max-height: 280px; }
+.lj-table td { padding: 7px 8px; }
+.lj-table tbody tr.active td { color: #9a3412; }
+.tag-best {
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  background: var(--green-soft);
+  color: #15803d;
+  margin-right: 4px;
+}
+.lj-table td .tag-low { margin-right: 4px; }
+
+/* 时间轴：浅色带 = 腾空区间，橙色标记 = 起跳点，主跳标记更深 */
+.lj-flight-band {
+  position: absolute;
+  top: 7px;
+  height: 10px;
+  border-radius: 3px;
+  background: rgba(249, 115, 22, .16);
+  pointer-events: none;
+}
+.mark.lj-jump { background: var(--orange); }
+.mark.lj-jump.is-best { box-shadow: 0 0 0 2px rgba(249, 115, 22, .28); }
+
+/* 小结 */
+.lj-sum-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lj-sum-body { padding: 14px 18px 18px; }
+.lj-verdict {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-2);
+}
+.lj-detail {
+  margin-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+.lj-detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+.lj-detail-row span { color: var(--text-3); flex: none; }
+.lj-detail-row b {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.lj-scale-line {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.lj-scale-note {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--amber);
+}
+.lj-warn {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lj-warn li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+.lj-warn li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+/* 拍摄建议 */
+.lj-tips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  padding: 14px 18px 10px;
+}
+.lj-tip { display: flex; flex-direction: column; gap: 3px; }
+.lj-tip b { font-size: 12.5px; color: var(--text); }
+.lj-tip span { font-size: 11.5px; color: var(--text-3); line-height: 1.6; }
+.lj-privacy {
+  margin: 4px 18px 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* 标尺校准：点画面里已知长度的两端。
+   十字光标 + 顶部浮条，不遮住视频主体。 */
+.stage.is-ruler { cursor: crosshair; }
+.lj-ruler-bar {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid rgba(37, 99, 235, .28);
+  box-shadow: 0 6px 18px -8px rgba(16, 24, 40, .28);
+  backdrop-filter: blur(8px);
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+}
+.lj-ruler-bar > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.lj-ruler-len { display: inline-flex; align-items: center; gap: 5px; flex: none; color: var(--text-3); }
+.lj-ruler-len input {
+  width: 62px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+}
+.lj-ruler-len input:focus {
+  outline: none;
+  border-color: #9db6f2;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
+}
+
+@media (max-width: 780px) {
+  .lj-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lj-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lj-tips { grid-template-columns: 1fr; }
+  .lj-chart-wrap { height: 200px; }
+  .lj-legend { flex-wrap: wrap; gap: 10px 14px; }
+}
+@media (max-width: 420px) {
+  .lj-metrics { grid-template-columns: 1fr; }
+  .lj-metrics .m-val { font-size: 30px; }
+  .lj-ruler-bar { gap: 8px; font-size: 11px; }
+  .lj-ruler-len input { width: 52px; }
+}

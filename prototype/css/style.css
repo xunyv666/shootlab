@@ -288,9 +288,7 @@ button { font-family: inherit; cursor: pointer; }
    （prob/arc 卡的显隐由数据有无管理，交给 updateAll） */
 .view-off { display: none !important; }
 
-/* ---------------- 占位页（跳绳 / 俯卧撑） ----------------
-   功能没做，就别装做能做：写清「开发中」，并把打算怎么算讲出来，
-   这样至少是个有效的需求说明，而不是一张空卡片。 */
+/* ---------------- 占位页（保留给尚未实现的项目） ---------------- */
 .soon {
   max-width: 1680px;
   margin: 0 auto;
@@ -360,6 +358,32 @@ button { font-family: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .views.bounce { animation: none; }
   .view-ink { transition: none; }
+}
+
+/* ---------------- 俯卧撑 ---------------- */
+.pushup-layout .pushup-video-card { min-height: 0; }
+.pushup-layout .stage { min-height: 390px; }
+.pushup-layout .stage video, .pushup-layout .stage canvas { object-fit: contain; }
+.pushup-sum-card, .pushup-chart-card, .pushup-tips-card { margin-top: 18px; }
+.pushup-sum-grid { grid-template-columns: repeat(4, 1fr); }
+.pushup-sum-body { padding: 0 18px 18px; }
+.pushup-verdict { margin: 0; color: var(--text-2); line-height: 1.75; }
+.pushup-warn { margin: 12px 0 0; padding-left: 18px; color: var(--text-3); font-size: 12.5px; line-height: 1.8; }
+.pushup-chart-wrap { height: 230px; padding: 0 12px 12px; }
+.pushup-chart-wrap canvas { display: block; width: 100%; height: 100%; }
+.pushup-tips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0 18px 16px; }
+.pushup-tip { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: #f7f9fc; border-radius: 10px; }
+.pushup-tip b { font-size: 12.5px; color: var(--text); }
+.pushup-tip span { color: var(--text-3); font-size: 12px; line-height: 1.55; }
+.pushup-privacy { margin: 0; padding: 0 18px 18px; color: var(--text-3); font-size: 11.5px; }
+.pushup-table tbody tr { cursor: pointer; }
+.pushup-table tbody tr.rep-good td:last-child b { color: #16a34a; }
+.pushup-table tbody tr.rep-warn td:last-child b { color: #f97316; }
+.pushup-metrics .m-bar i { background: linear-gradient(90deg, #f97316, #16a34a); }
+@media (max-width: 720px) {
+  .pushup-sum-grid { grid-template-columns: repeat(2, 1fr); }
+  .pushup-tips { grid-template-columns: 1fr; }
+  .pushup-layout .stage { min-height: 300px; }
 }
 
 /* ---------------- 卡片 ---------------- */

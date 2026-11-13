@@ -34,7 +34,7 @@
   </div>
 </header>
 
-<!-- 一级导航：运动项目。跳绳已实现，俯卧撑先占位 -->
+<!-- 一级导航：运动项目 -->
 <nav class="projects" id="projectTabs" aria-label="运动项目">
   <button class="project-tab active" data-project="basketball">篮球投篮</button>
   <button class="project-tab" data-project="rope">跳绳计数</button>
@@ -396,34 +396,61 @@
   </section>
 </section>
 
-<!-- ===== 俯卧撑：占位页（功能未实现，先立结构） ===== -->
-<section class="soon" id="pushupPane" hidden>
-  <div class="soon-card">
-    <div class="soon-icon">
-      <svg viewBox="0 0 32 20" width="38" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="5.4" cy="6.6" r="2.4"></circle>
-        <path d="M8 7.8 L26.5 10"></path>
-        <path d="M10.6 8.1 V16.2 M24.2 9.9 V16.2"></path>
-        <path d="M2.5 16.5 H29.5" stroke-width="1.4" opacity="0.5"></path>
-      </svg>
+<!-- ===== 俯卧撑 ===== -->
+<section class="layout pushup-layout" id="pushupPane" hidden>
+  <section class="col col-left">
+    <div class="card video-card pushup-video-card">
+      <div class="card-head">
+        <h2>俯卧撑视频</h2>
+        <div class="head-tools">
+          <span class="badge" id="pushupBadge">等待视频</span>
+          <button class="btn btn-sm" id="pushupChangeBtn" type="button" hidden>更换视频</button>
+          <input type="file" id="pushupFile" accept="video/*" hidden />
+        </div>
+      </div>
+      <div class="stage" id="pushupStage">
+        <video id="pushupVideo" playsinline muted></video>
+        <canvas id="pushupOverlay"></canvas>
+        <div class="drop" id="pushupDrop">
+          <div class="drop-art">
+            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
+              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
+              <circle cx="29" cy="34" r="5" stroke="currentColor" stroke-width="2"/>
+              <path d="M35 37 78 48M43 41 36 65M68 46 78 66M47 42 61 57M61 57 74 43" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M20 69h86" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
+            </svg>
+          </div>
+          <h3>拖一段俯卧撑视频进来</h3>
+          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
+          <div class="drop-steps"><span><b>1</b>选择视频</span><i></i><span><b>2</b>识别屈肘周期</span><i></i><span><b>3</b>次数与标准度</span></div>
+          <label class="btn btn-primary btn-lg" for="pushupFile">选一个俯卧撑视频</label>
+          <p class="drop-tip"><b>侧面拍最准</b> · 肩、髋、踝和手腕都要入镜 · 固定机位、单人全身</p>
+          <p class="engine-hint" id="pushupHint" hidden></p>
+        </div>
+        <div class="analysing" id="pushupAnalysing" hidden>
+          <div class="an-box"><div class="an-head"><b id="pushupAnTitle">正在分析</b><span id="pushupAnPct">0%</span></div><div class="an-track"><i id="pushupAnBar"></i></div><p class="an-text" id="pushupAnText">正在加载姿态模型…</p></div>
+        </div>
+        <span class="stage-chip" id="pushupStageChip" hidden></span>
+        <span class="frame-badge" id="pushupFrameBadge" hidden></span>
+      </div>
+      <div class="track" id="pushupTrack" hidden><div class="track-bar"></div><div class="track-fill" id="pushupTrackFill"></div><div class="track-marks" id="pushupTrackMarks"></div><div class="track-head" id="pushupTrackHead"></div></div>
+      <div class="live" id="pushupLive" hidden><span class="live-t" id="pushupLiveT">0.00s</span><span class="live-shot" id="pushupLiveRep">—</span><span class="live-vals" id="pushupLiveVals"></span></div>
+      <div class="controls" id="pushupControls" hidden>
+        <button class="btn btn-icon" id="pushupBtnPrev" title="上一帧（←）">&#10216;</button><button class="btn btn-play" id="pushupBtnPlay" title="播放 / 暂停（空格）">&#9654;</button><button class="btn btn-icon" id="pushupBtnNext" title="下一帧（→）">&#10217;</button><span class="divider"></span><div class="speeds" id="pushupSpeeds"></div><span class="spacer"></span><span class="time" id="pushupTime">0.00s</span>
+      </div>
+      <p class="shortcut" id="pushupShortcut" hidden>空格 播放/暂停 · ←→ 逐帧 · 点击时间轴跳转 · 点击记录行定位</p>
     </div>
-    <div class="soon-head">
-      <h2>俯卧撑</h2>
-      <span class="soon-tag">开发中</span>
+    <div class="card table-card" id="pushupLogCard" hidden>
+      <div class="card-head"><h2>动作记录</h2><span class="sub" id="pushupLogSub"></span></div>
+      <div class="table-wrap"><table class="shot-table pushup-table"><thead><tr><th class="c-idx">#</th><th>时间</th><th>下放角</th><th>躯干</th><th class="c-score">标准度</th></tr></thead><tbody id="pushupLogRows"></tbody></table></div>
     </div>
-    <p class="soon-desc">
-      数个数只是及格线。真正要看的是每一次下去够不够深、身体有没有塌腰。
-    </p>
-    <ul class="soon-list">
-      <li><b>总次数 · 每组节奏</b><span>按肘关节屈伸周期识别，区分快撑与慢撑</span></li>
-      <li><b>下放深度</b><span>用肘角最小值判断，没下去的不算标准</span></li>
-      <li><b>躯干是否成一条线</b><span>肩—髋—踝角度，塌腰或撅臀都会被标出来</span></li>
-      <li><b>标准度评分</b><span>深度、躯干、节奏三项加权</span></li>
-    </ul>
-    <p class="soon-tip">
-      <b>拍摄要求</b>：侧面机位，要能拍到肩到脚整条线。正对着拍看不到塌腰，也量不出深度。
-    </p>
-  </div>
+  </section>
+  <section class="col col-right">
+    <div class="metrics pushup-metrics" id="pushupMetrics"></div>
+    <div class="card pushup-sum-card" id="pushupSummary"></div>
+    <div class="card pushup-chart-card"><div class="card-head"><h2>动作曲线</h2><span class="sub">肘角越低，说明下放越深</span></div><div class="pushup-chart-wrap"><canvas id="pushupChart" aria-label="俯卧撑肘角和躯干角曲线"></canvas></div></div>
+    <div class="card pushup-tips-card"><div class="card-head"><h2>怎么拍更准</h2></div><div class="pushup-tips"><div class="pushup-tip"><b>正侧面</b><span>镜头与身体垂直，才能看清肘角和塌腰。</span></div><div class="pushup-tip"><b>全身入镜</b><span>肩、髋、踝和手腕都要在画面里。</span></div><div class="pushup-tip"><b>固定机位</b><span>手机放支架上，别手持跟拍。</span></div><div class="pushup-tip"><b>完整动作</b><span>先撑直再下放，底部停顿不要被剪掉。</span></div></div><p class="pushup-privacy">视频不会上传。姿态识别用 MediaPipe Pose，模型随页面加载到本地运行。</p></div>
+  </section>
 </section>
 
 <!-- ===== 立定跳远 ===== -->
@@ -692,6 +719,7 @@
 <script src="js/suggestion.js"></script>
 <script src="js/coach.js"></script>
 <script src="js/rope.js"></script>
+<script src="js/pushup.js"></script>
 <script src="js/longjump.js"></script>
 <script src="js/app.js"></script>
 
@@ -699,10 +727,12 @@
 <script type="module">
   import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
   import * as RopeEngine from './js/rope-engine.js';
+  import * as PushUpEngine from './js/pushup-engine.js';
   import * as LongJumpEngine from './js/longjump-engine.js';
   window.BB = window.BB || {};
   window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady };
   window.BB.RopeEngine = RopeEngine;
+  window.BB.PushUpEngine = PushUpEngine;
   window.BB.LongJumpEngine = LongJumpEngine;
   document.documentElement.classList.add('engine-ready');
 </script>

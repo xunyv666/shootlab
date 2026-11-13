@@ -362,7 +362,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------------- 俯卧撑 ---------------- */
 .pushup-layout .pushup-video-card { min-height: 0; }
-.pushup-layout .stage { min-height: 390px; }
+.pushup-layout .stage { min-height: 0; }
 .pushup-layout .stage video, .pushup-layout .stage canvas { object-fit: contain; }
 .pushup-sum-card, .pushup-chart-card, .pushup-tips-card { margin-top: 18px; }
 .pushup-sum-grid { grid-template-columns: repeat(4, 1fr); }
@@ -383,7 +383,6 @@ button { font-family: inherit; cursor: pointer; }
 @media (max-width: 720px) {
   .pushup-sum-grid { grid-template-columns: repeat(2, 1fr); }
   .pushup-tips { grid-template-columns: 1fr; }
-  .pushup-layout .stage { min-height: 300px; }
 }
 
 /* ---------------- 卡片 ---------------- */

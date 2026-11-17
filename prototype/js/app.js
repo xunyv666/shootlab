@@ -30,7 +30,7 @@ window.BB = window.BB || {};
      切换只加/去 .view-off 类，不碰卡片自己的 hidden ——
      prob/arc 卡的显隐由数据有无决定，归 updateAll 管。 */
   var VIEWS = ['analyze', 'compare', 'zone'];
-  /* 一级导航：运动项目。篮球、跳绳、立定跳远已实现，俯卧撑仍是占位页 */
+  /* 一级导航：运动项目。每个动作项目都有独立的视频和分析流程 */
   var PROJECTS = ['basketball', 'rope', 'pushup', 'longjump'];
 
   function currentHash() {
@@ -135,6 +135,10 @@ window.BB = window.BB || {};
     if (BB.LongJump) {
       if (proj === 'longjump') BB.LongJump.onShow();
       else BB.LongJump.onHide();
+    }
+    if (BB.PushUp) {
+      if (proj === 'pushup') BB.PushUp.onShow();
+      else BB.PushUp.onHide();
     }
 
     if (isBB) {
@@ -1360,7 +1364,7 @@ window.BB = window.BB || {};
       }
     }
 
-    /* 项目导航：跳绳和立定跳远各有自己的分析流程，俯卧撑仍是占位页 */
+    /* 项目导航：三个动作项目各有自己的分析流程 */
     document.querySelectorAll('.project-tab').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-project');
@@ -1388,6 +1392,12 @@ window.BB = window.BB || {};
         if (e.code === 'ArrowRight') { e.preventDefault(); BB.LongJump.step(1); }
         return;
       }
+      if (state.project === 'pushup' && BB.PushUp) {
+        if (e.code === 'Space') { e.preventDefault(); BB.PushUp.toggle(); }
+        if (e.code === 'ArrowLeft') { e.preventDefault(); BB.PushUp.step(-1); }
+        if (e.code === 'ArrowRight') { e.preventDefault(); BB.PushUp.step(1); }
+        return;
+      }
       if (e.code === 'Space') { e.preventDefault(); BB.VideoPlayer.toggle(); }
       if (e.code === 'ArrowLeft') { e.preventDefault(); BB.VideoPlayer.step(-1); }
       if (e.code === 'ArrowRight') { e.preventDefault(); BB.VideoPlayer.step(1); }
@@ -1406,6 +1416,7 @@ window.BB = window.BB || {};
     initVideo();
     initEngine();
     if (BB.Rope) BB.Rope.init();
+    if (BB.PushUp) BB.PushUp.init();
     if (BB.LongJump) BB.LongJump.init();
     initQuoteLayer();
     renderDataset();

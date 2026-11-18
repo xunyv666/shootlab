@@ -349,6 +349,9 @@
     cv.addEventListener('pointercancel', function () { drag = null; });
 
     window.addEventListener('resize', resize);
+    /* 数据常常在本页隐藏时注入，容器宽度为 0 会直接跳过绘制；
+       用 ResizeObserver 在切到本页、容器获得尺寸时补一次重绘。 */
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(cv.parentElement);
     resize();
   }
 

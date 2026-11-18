@@ -292,7 +292,8 @@ window.BB = window.BB || {};
       '<div class="sum-grid">' +
         '<div class="sum-cell"><b class="' + scCls + '">' + score + '</b>' +
           '<span>综合评分</span><i>' + st.name + ' ' + starScore + '</i></div>' +
-        '<div class="sum-cell"><b>' + (res.hasResult ? res.hitRate + '%' : '—') + '</b>' +
+        '<div class="sum-cell"><b' + (res.hasResult ? '' : ' class="na"') + '>' +
+          (res.hasResult ? res.hitRate + '%' : '—') + '</b>' +
           '<span>命中率</span><i>' + (res.hasResult ? res.made + '/' + markedN + ' 已标记' : '在视频里标记结果后统计') + '</i></div>' +
         '<div class="sum-cell"><b class="dim-name">' + best.name + '</b>' +
           '<span>最接近 ' + st.name + '</span><i class="pos">' + gapTxt(best.gap) + '</i></div>' +

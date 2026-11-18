@@ -1055,9 +1055,16 @@ window.BB = window.BB || {};
       });
     };
 
-    if (v.readyState >= 1 && v.videoWidth) start();
-    else v.addEventListener('loadedmetadata', start, { once: true });
-    setTimeout(function () { if (v.readyState >= 1 && v.videoWidth) start(); }, 1500);
+    /* 摄像头录出的 webm 头里没有 Duration，video.duration 会是 Infinity，
+       各引擎都会判「时长无效」。先让 <video> 把真实时长算出来再交给引擎。
+       普通文件 duration 已是有限值，这里是零开销的空操作。 */
+    var begin = function () {
+      if (BB.Camera && BB.Camera.warmDuration) BB.Camera.warmDuration(v).then(start, start);
+      else start();
+    };
+    if (v.readyState >= 1 && v.videoWidth) begin();
+    else v.addEventListener('loadedmetadata', begin, { once: true });
+    setTimeout(function () { if (v.readyState >= 1 && v.videoWidth) begin(); }, 1500);
   }
 
   /* ---------------- 事件绑定 ---------------- */
@@ -1292,6 +1299,8 @@ window.BB = window.BB || {};
     step: step,
     pause: pause,
     seekTime: seekTime,
+    /* 摄像头录完的片段走同一条分析链路 */
+    loadFile: startAnalyze,
     /* 排版自检入口：把一份离线分析结果直接喂给界面。
        没有视频文件时也能检查指标卡 / 曲线 / 叠加层的排版。 */
     preview: function (res) { J.duration = res.meta.duration || 0; applyResult(res); }

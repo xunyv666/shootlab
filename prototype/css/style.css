@@ -2457,3 +2457,133 @@ td.c-score b { font-size: 13px; }
   .lj-ruler-bar { gap: 8px; font-size: 11px; }
   .lj-ruler-len input { width: 52px; }
 }
+
+/* ============================================================
+   摄像头实时模式
+   空态里多一个「开摄像头练」；开始后 video 用前置镜像、
+   覆盖一层 HUD（录制计时 / 计数 / 结束按钮）。
+   ============================================================ */
+
+.drop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.btn-cam {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .3);
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.btn-cam svg { width: 16px; height: 12px; flex: none; }
+.btn-cam:hover { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .5); }
+.btn-cam:disabled { opacity: .55; cursor: default; }
+
+.cam-err {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: #fca5a5;
+  line-height: 1.6;
+}
+
+/* 前置摄像头看到的是镜子里的自己，画面和骨骼要一起翻 */
+.stage.is-cam video { transform: scaleX(-1); }
+
+.camhud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 14px;
+  pointer-events: none;
+}
+.camhud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.camhud-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, .62);
+  color: #fff;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.camhud-rec i {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: camPulse 1.3s ease-in-out infinite;
+}
+@keyframes camPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .25; }
+}
+.camhud-stop {
+  pointer-events: auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: var(--orange, #f97316);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -8px rgba(249, 115, 22, .9);
+}
+.camhud-stop:hover { filter: brightness(1.06); }
+
+.camhud-main {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(17, 24, 39, .55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.camhud-num {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #fff;
+}
+.camhud-num b {
+  font-size: 44px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.camhud-unit { font-size: 14px; opacity: .82; }
+.camhud-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, .8);
+}
+
+@media (max-width: 720px) {
+  .camhud-num b { font-size: 34px; }
+  .camhud-main { padding: 8px 12px; }
+  .camhud-hint { font-size: 11.5px; }
+}

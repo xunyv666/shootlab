@@ -789,9 +789,16 @@ window.BB = window.BB || {};
       });
     };
 
-    if (v.readyState >= 1 && v.videoWidth) start();
-    else v.addEventListener('loadedmetadata', start, { once: true });
-    setTimeout(function () { if (v.readyState >= 1 && v.videoWidth) start(); }, 1500);
+    /* 摄像头录出的 webm 头里没有 Duration，video.duration 会是 Infinity，
+       各引擎都会判「时长无效」。先让 <video> 把真实时长算出来再交给引擎。
+       普通文件 duration 已是有限值，这里是零开销的空操作。 */
+    var begin = function () {
+      if (BB.Camera && BB.Camera.warmDuration) BB.Camera.warmDuration(v).then(start, start);
+      else start();
+    };
+    if (v.readyState >= 1 && v.videoWidth) begin();
+    else v.addEventListener('loadedmetadata', begin, { once: true });
+    setTimeout(function () { if (v.readyState >= 1 && v.videoWidth) begin(); }, 1500);
   }
 
   /* 改身高不重跑模型：所有厘米值都按同一把尺线性缩放 */
@@ -1008,6 +1015,8 @@ window.BB = window.BB || {};
     toggle: toggle,
     step: step,
     pause: pause,
-    seekTime: seekTime
+    seekTime: seekTime,
+    /* 摄像头录完的片段走同一条分析链路 */
+    loadFile: startAnalyze
   };
 })(window.BB);

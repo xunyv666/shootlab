@@ -86,7 +86,13 @@
             <i></i>
             <span><b>3</b>出手指标与建议</span>
           </div>
-          <label class="btn btn-primary btn-lg" for="fileInput">选一个视频试试</label>
+          <div class="drop-actions">
+            <label class="btn btn-primary btn-lg" for="fileInput">选一个视频试试</label>
+            <button class="btn btn-cam" type="button" data-cam="basketball">
+              <svg viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="2.6" width="12.2" height="8.8" rx="2.2"/><path d="M13.2 6.6 18 4.2v5.6l-4.8-2.4z"/></svg>
+              开摄像头练
+            </button>
+          </div>
           <p class="drop-tip"><b>侧面拍最准</b>（镜头对正侧面）· 正面/背面会算出偏高的出手角 · <b>只留一个人入镜</b>、全身在画面里</p>
           <p class="engine-hint" id="engineHint" hidden></p>
         </div>
@@ -300,7 +306,13 @@
             <i></i>
             <span><b>3</b>次数与节奏</span>
           </div>
-          <label class="btn btn-primary btn-lg" for="ropeFile">选一个跳绳视频</label>
+          <div class="drop-actions">
+            <label class="btn btn-primary btn-lg" for="ropeFile">选一个跳绳视频</label>
+            <button class="btn btn-cam" type="button" data-cam="rope">
+              <svg viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="2.6" width="12.2" height="8.8" rx="2.2"/><path d="M13.2 6.6 18 4.2v5.6l-4.8-2.4z"/></svg>
+              开摄像头练
+            </button>
+          </div>
           <p class="drop-tip"><b>固定机位、全身入镜</b> · 人物占画面高度一半以上 · 跳绳离地 3–10cm，太远会测不出来</p>
           <p class="engine-hint" id="ropeHint" hidden></p>
         </div>
@@ -423,7 +435,13 @@
           <h3>拖一段俯卧撑视频进来</h3>
           <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
           <div class="drop-steps"><span><b>1</b>选择视频</span><i></i><span><b>2</b>识别屈肘周期</span><i></i><span><b>3</b>次数与标准度</span></div>
-          <label class="btn btn-primary btn-lg" for="pushupFile">选一个俯卧撑视频</label>
+          <div class="drop-actions">
+            <label class="btn btn-primary btn-lg" for="pushupFile">选一个俯卧撑视频</label>
+            <button class="btn btn-cam" type="button" data-cam="pushup">
+              <svg viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="2.6" width="12.2" height="8.8" rx="2.2"/><path d="M13.2 6.6 18 4.2v5.6l-4.8-2.4z"/></svg>
+              开摄像头练
+            </button>
+          </div>
           <p class="drop-tip"><b>侧面拍最准</b> · 肩、髋、踝和手腕都要入镜 · 固定机位、单人全身</p>
           <p class="engine-hint" id="pushupHint" hidden></p>
         </div>
@@ -501,7 +519,13 @@
             <i></i>
             <span><b>3</b>距离与起跳时序</span>
           </div>
-          <label class="btn btn-primary btn-lg" for="ljFile">选一个跳远视频</label>
+          <div class="drop-actions">
+            <label class="btn btn-primary btn-lg" for="ljFile">选一个跳远视频</label>
+            <button class="btn btn-cam" type="button" data-cam="longjump">
+              <svg viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="2.6" width="12.2" height="8.8" rx="2.2"/><path d="M13.2 6.6 18 4.2v5.6l-4.8-2.4z"/></svg>
+              开摄像头练
+            </button>
+          </div>
           <p class="drop-tip"><b>正侧面机位</b> · 起跳线和落地区都要在画面里 · 地面放一把卷尺或做两条标记，距离才准</p>
           <p class="engine-hint" id="ljHint" hidden></p>
         </div>
@@ -721,16 +745,18 @@
 <script src="js/rope.js"></script>
 <script src="js/pushup.js"></script>
 <script src="js/longjump.js"></script>
+<script src="js/live.js"></script>
+<script src="js/camera.js"></script>
 <script src="js/app.js"></script>
 
 <!-- 分析引擎是 ES 模块（内含 MediaPipe wasm 运行时），必须经 http(s) 打开 -->
 <script type="module">
-  import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady } from './js/pose-engine.js';
+  import { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady, loadDetector, acquireTimeBlock } from './js/pose-engine.js';
   import * as RopeEngine from './js/rope-engine.js';
   import * as PushUpEngine from './js/pushup-engine.js';
   import * as LongJumpEngine from './js/longjump-engine.js';
   window.BB = window.BB || {};
-  window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady };
+  window.BB.PoseEngine = { analyze, isReady, recomputeShot, recalcAngles, preload, onEngineProgress, engineIsReady, loadDetector, acquireTimeBlock };
   window.BB.RopeEngine = RopeEngine;
   window.BB.PushUpEngine = PushUpEngine;
   window.BB.LongJumpEngine = LongJumpEngine;

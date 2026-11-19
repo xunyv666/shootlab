@@ -23,10 +23,10 @@ window.BB = window.BB || {};
   var SHOW_SEC = 2.6; // 一次出手的弧线在画面上停留多久
   var GROW_SEC = 0.65; // 弧线「生长」动画时长
 
-  /* 画面配色：轨迹线用天蓝，和橙色骨骼刻意错开，否则叠在一起分不清 */
-  var C_LINE = '56,189,248';   // 天蓝
-  var C_HAND = '#f97316';      // 出手点（主题橙，白描边和骨骼区分）
-  var C_RIM = '#ef4444';       // 篮筐
+  var T = BB.THEME;
+
+  /* 画面配色：轨迹用品牌蓝，出手点/落点用青柠，篮筐靶心用青色辅助 */
+  var C_LINE = '37,99,235';    // 品牌蓝
 
   /* ---------------- 纯几何 ---------------- */
 
@@ -214,7 +214,7 @@ window.BB = window.BB || {};
       /* 出手点 */
       ctx.beginPath();
       ctx.arc(P0[0], P0[1], 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(249,115,22,' + (0.9 * fade) + ')';
+      ctx.fillStyle = T.rgba(T.lime, 0.9 * fade);
       ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,' + (0.85 * fade) + ')';
       ctx.lineWidth = 1.5;
@@ -226,13 +226,13 @@ window.BB = window.BB || {};
         var r = Math.max(9, box.w * 0.012);
         ctx.beginPath();
         ctx.arc(P1[0], P1[1], r, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(239,68,68,' + (0.85 * rimA) + ')';
+        ctx.strokeStyle = T.rgba(T.cyan, 0.85 * rimA);
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(P1[0] - r * 1.8, P1[1]); ctx.lineTo(P1[0] + r * 1.8, P1[1]);
         ctx.moveTo(P1[0], P1[1] - r * 1.8); ctx.lineTo(P1[0], P1[1] + r * 1.8);
-        ctx.strokeStyle = 'rgba(239,68,68,' + (0.45 * rimA) + ')';
+        ctx.strokeStyle = T.rgba(T.cyan, 0.45 * rimA);
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -250,7 +250,7 @@ window.BB = window.BB || {};
       var ly = Math.max(box.y + 16, top[1] - 10);
       ctx.fillStyle = 'rgba(8,12,20,' + (0.55 * fade) + ')';
       ctx.fillRect(lx - 5, ly - 13, tw + 10, 16);
-      ctx.fillStyle = 'rgba(255,247,237,' + (0.95 * fade) + ')';
+      ctx.fillStyle = T.rgba(T.white, 0.95 * fade);
       ctx.fillText(txt, lx, ly);
 
       ctx.restore();

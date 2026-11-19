@@ -14,9 +14,14 @@ window.BB = window.BB || {};
   var zoomEl = null, zoomChart = null, zoomKind = null, zoomView = 'trend';
   /* 最近一次喂进来的数据，放大图重建时要用同一份 */
   var last = { shots: null, star: null, curve: null, marks: null };
-  var C_USER = '#f97316';
-  var C_STAR = '#475569';
+  var T = BB.THEME;
+  var C_USER = T.brand;
+  var C_STAR = T.text3;
+  var C_GRID = T.lineSoft;
+  var C_AXIS = T.text3;
   var FONT = 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+  /* tooltip 外阴影统一取主题墨色，避免散落硬编码 */
+  var TIP_CSS = 'box-shadow:0 6px 20px ' + T.rgba(T.text, .10) + ';border-radius:10px;padding:8px 12px,';
 
   function hasLib() { return typeof window.echarts !== 'undefined'; }
 
@@ -31,31 +36,31 @@ window.BB = window.BB || {};
       animationDuration: 600,
       tooltip: {
         trigger: 'item',
-        backgroundColor: 'rgba(255,255,255,0.98)',
-        borderColor: '#e8eaee',
-        textStyle: { color: '#1a1d24', fontSize: 12 },
-        extraCssText: 'box-shadow:0 6px 20px rgba(16,24,40,.10);border-radius:10px;padding:8px 12px;'
+        backgroundColor: T.rgba(T.white, .98),
+        borderColor: T.line,
+        textStyle: { color: T.text, fontSize: 12 },
+        extraCssText: TIP_CSS
       },
       legend: {
         bottom: 0,
         icon: 'roundRect',
         itemWidth: 10, itemHeight: 10, itemGap: 16,
-        textStyle: { color: '#5b6472', fontSize: 12, fontFamily: FONT }
+        textStyle: { color: C_AXIS, fontSize: 12, fontFamily: FONT }
       },
       radar: {
         center: ['50%', '47%'],
         radius: '63%',
         splitNumber: 4,
         axisName: {
-          color: '#5b6472',
+          color: C_AXIS,
           fontSize: 11.5,
           fontFamily: FONT,
           padding: [2, 4]
         },
         indicator: D.map(function (d) { return { name: d.name, max: 100 }; }),
-        splitLine: { lineStyle: { color: '#eceef2' } },
-        splitArea: { areaStyle: { color: ['#ffffff', '#fafbfc'] } },
-        axisLine: { lineStyle: { color: '#eceef2' } }
+        splitLine: { lineStyle: { color: C_GRID } },
+        splitArea: { areaStyle: { color: [T.white, T.rgba(T.brand, .03)] } },
+        axisLine: { lineStyle: { color: C_GRID } }
       },
       series: [{
         type: 'radar',
@@ -66,14 +71,14 @@ window.BB = window.BB || {};
             value: D.map(function (d) { return userRadar[d.key]; }),
             itemStyle: { color: C_USER },
             lineStyle: { color: C_USER, width: 2.5 },
-            areaStyle: { color: 'rgba(249,115,22,0.18)' }
+            areaStyle: { color: T.rgba(T.brand, .10) }
           },
           {
             name: starName + ' 基准',
             value: D.map(function (d) { return starRadar[d.key]; }),
             itemStyle: { color: C_STAR },
             lineStyle: { color: C_STAR, width: 2, type: 'dashed' },
-            areaStyle: { color: 'rgba(71,85,105,0.06)' }
+            areaStyle: { color: T.rgba(T.text2, .06) }
           }
         ]
       }]
@@ -103,19 +108,19 @@ window.BB = window.BB || {};
         { type: 'inside', zoomOnMouseWheel: true, moveOnMouseWheel: false, moveOnMouseMove: true },
         {
           type: 'slider', height: 20, bottom: 16, borderColor: 'transparent',
-          backgroundColor: '#f1f3f6', fillerColor: 'rgba(249,115,22,.12)',
-          handleStyle: { color: '#fff', borderColor: '#d7dbe3' },
+          backgroundColor: C_GRID, fillerColor: T.rgba(T.brand, .12),
+          handleStyle: { color: T.white, borderColor: T.lineStrong },
           moveHandleSize: 4,
-          textStyle: { color: '#8b94a3', fontSize: 10 }
+          textStyle: { color: C_AXIS, fontSize: 10 }
         }
       ] : [],
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(255,255,255,0.98)',
-        borderColor: '#e8eaee',
-        textStyle: { color: '#1a1d24', fontSize: 12 },
-        extraCssText: 'box-shadow:0 6px 20px rgba(16,24,40,.10);border-radius:10px;padding:8px 12px;',
-        axisPointer: { type: 'line', lineStyle: { color: '#d7dbe3', type: 'dashed' } },
+        backgroundColor: T.rgba(T.white, .98),
+        borderColor: T.line,
+        textStyle: { color: T.text, fontSize: 12 },
+        extraCssText: TIP_CSS,
+        axisPointer: { type: 'line', lineStyle: { color: T.lineStrong, type: 'dashed' } },
         formatter: function (ps) {
           var idx = ps[0].dataIndex;
           var s = shots[idx];
@@ -123,22 +128,22 @@ window.BB = window.BB || {};
             '综合评分：<b>' + scores[idx] + '</b><br/>' +
             '出手角度：<b>' + (angles[idx] == null ? '未测出' : angles[idx] + '°') + '</b>' +
             (angles[idx] == null ? '（球太小，这一球的角度没算出来）' : '（理想 45–52°）') + '<br/>' +
-            '结果：' + (s.made ? '<span style="color:#16a34a">命中</span>' : '<span style="color:#94a3b8">未中</span>');
+            '结果：' + (s.made ? '<span style="color:' + T.greenInk + '">命中</span>' : '<span style="color:' + T.text3 + '">未中</span>');
         }
       },
       legend: {
         top: big ? 12 : 0, right: big ? 14 : 4,
         icon: 'roundRect', itemWidth: 10, itemHeight: 10, itemGap: 14,
-        textStyle: { color: '#5b6472', fontSize: 12 + fs, fontFamily: FONT }
+        textStyle: { color: C_AXIS, fontSize: 12 + fs, fontFamily: FONT }
       },
       xAxis: {
         type: 'category',
         data: xs,
         boundaryGap: false,
-        axisLine: { lineStyle: { color: '#e8eaee' } },
+        axisLine: { lineStyle: { color: T.line } },
         axisTick: { show: false },
         axisLabel: {
-          color: '#8b94a3', fontSize: 11 + fs, fontFamily: FONT,
+          color: C_AXIS, fontSize: 11 + fs, fontFamily: FONT,
           /* 放大后才把所有「第 N 次」都写出来，窄图里写全会叠字 */
           interval: big ? 0 : 'auto'
         }
@@ -146,13 +151,13 @@ window.BB = window.BB || {};
       yAxis: [
         {
           type: 'value', min: 30, max: 100, 
-          splitLine: { lineStyle: { color: '#f1f3f6' } },
-          axisLabel: { color: '#8b94a3', fontSize: 11 + fs }
+          splitLine: { lineStyle: { color: C_GRID } },
+          axisLabel: { color: C_AXIS, fontSize: 11 + fs }
         },
         {
           type: 'value', min: 35, max: 60, 
           splitLine: { show: false },
-          axisLabel: { color: '#8b94a3', fontSize: 11 + fs }
+          axisLabel: { color: C_AXIS, fontSize: 11 + fs }
         }
       ],
       series: [
@@ -163,22 +168,22 @@ window.BB = window.BB || {};
           symbol: 'circle',
           symbolSize: 7,
           data: scores,
-          itemStyle: { color: C_USER, borderColor: '#fff', borderWidth: 2 },
+          itemStyle: { color: C_USER, borderColor: T.white, borderWidth: 2 },
           lineStyle: { color: C_USER, width: 2.5 },
           areaStyle: {
             color: {
               type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(249,115,22,0.22)' },
-                { offset: 1, color: 'rgba(249,115,22,0.01)' }
+                { offset: 0, color: T.rgba(T.brand, .10) },
+                { offset: 1, color: T.rgba(T.brand, .01) }
               ]
             }
           },
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: '#cbd5e1', type: 'dashed', width: 1 },
-            label: { formatter: '达标线 80', color: '#94a3b8', fontSize: 10, position: 'insideStartTop' },
+            lineStyle: { color: T.lime, type: 'dashed', width: 1.5 },
+            label: { formatter: '达标线 80', color: T.limeInk, fontSize: 10, position: 'insideStartTop' },
             data: [{ yAxis: 80 }]
           }
         },
@@ -190,19 +195,19 @@ window.BB = window.BB || {};
           symbol: 'diamond',
           symbolSize: 7,
           data: angles,
-          itemStyle: { color: C_STAR, borderColor: '#fff', borderWidth: 2 },
+          itemStyle: { color: C_STAR, borderColor: T.white, borderWidth: 2 },
           lineStyle: { color: C_STAR, width: 2, type: [5, 3] },
           markArea: {
             silent: true,
-            itemStyle: { color: 'rgba(71,85,105,0.045)' },
+            itemStyle: { color: T.rgba(T.cyan, .06) },
             label: { show: false },
             data: [[{ yAxis: 45 }, { yAxis: 52 }]]
           },
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: 'rgba(71,85,105,0.55)', type: 'dotted', width: 1.5 },
-            label: { formatter: '球星 ' + starAngle + '°', color: C_STAR, fontSize: 10, position: 'insideEndTop' },
+            lineStyle: { color: T.cyan, type: 'dashed', width: 1.5 },
+            label: { formatter: '球星 ' + starAngle + '°', color: T.cyanInk, fontSize: 10, position: 'insideEndTop' },
             data: [{ yAxis: starAngle }]
           }
         }
@@ -231,18 +236,18 @@ window.BB = window.BB || {};
         { type: 'inside', zoomOnMouseWheel: true, moveOnMouseWheel: false, moveOnMouseMove: true },
         {
           type: 'slider', height: 20, bottom: 16, borderColor: 'transparent',
-          backgroundColor: '#f1f3f6', fillerColor: 'rgba(249,115,22,.12)',
-          handleStyle: { color: '#fff', borderColor: '#d7dbe3' },
+          backgroundColor: C_GRID, fillerColor: T.rgba(T.brand, .12),
+          handleStyle: { color: T.white, borderColor: T.lineStrong },
           moveHandleSize: 4,
-          textStyle: { color: '#8b94a3', fontSize: 10 }
+          textStyle: { color: C_AXIS, fontSize: 10 }
         }
       ] : [],
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(255,255,255,0.98)',
-        borderColor: '#e8eaee',
-        textStyle: { color: '#1a1d24', fontSize: 12 },
-        extraCssText: 'box-shadow:0 6px 20px rgba(16,24,40,.10);border-radius:10px;padding:8px 12px;',
+        backgroundColor: T.rgba(T.white, .98),
+        borderColor: T.line,
+        textStyle: { color: T.text, fontSize: 12 },
+        extraCssText: TIP_CSS,
         formatter: function (ps) {
           var i = ps[0].dataIndex;
           return '<b>' + (+ts[i]).toFixed(2) + 's</b><br/>' +
@@ -254,16 +259,16 @@ window.BB = window.BB || {};
       legend: {
         top: big ? 12 : 0, right: big ? 14 : 4,
         icon: 'roundRect', itemWidth: 10, itemHeight: 10, itemGap: 12,
-        textStyle: { color: '#5b6472', fontSize: 11.5 + fs, fontFamily: FONT }
+        textStyle: { color: C_AXIS, fontSize: 11.5 + fs, fontFamily: FONT }
       },
       xAxis: {
         type: 'category',
         data: ts,
         boundaryGap: false,
-        axisLine: { lineStyle: { color: '#e8eaee' } },
+        axisLine: { lineStyle: { color: T.line } },
         axisTick: { show: false },
         axisLabel: {
-          color: '#8b94a3', fontSize: 11 + fs,
+          color: C_AXIS, fontSize: 11 + fs,
           interval: big ? Math.max(1, Math.round(ts.length / 18)) - 1
             : Math.max(1, Math.floor(ts.length / 6)) - 1,
           formatter: function (v) { return (+v).toFixed(1) + 's'; }
@@ -271,16 +276,16 @@ window.BB = window.BB || {};
       },
       yAxis: [
         {
-          type: 'value', name: '角度(°)', nameTextStyle: { color: '#a8b0bd', fontSize: 10 },
+          type: 'value', name: '角度(°)', nameTextStyle: { color: C_AXIS, fontSize: 10 },
           min: 0, max: 190,
-          splitLine: { lineStyle: { color: '#f1f3f6' } },
-          axisLabel: { color: '#8b94a3', fontSize: 10.5 }
+          splitLine: { lineStyle: { color: C_GRID } },
+          axisLabel: { color: C_AXIS, fontSize: 10.5 }
         },
         {
-          type: 'value', name: '手腕高', nameTextStyle: { color: '#a8b0bd', fontSize: 10 },
+          type: 'value', name: '手腕高', nameTextStyle: { color: C_AXIS, fontSize: 10 },
           min: 50, max: 170,
           splitLine: { show: false },
-          axisLabel: { color: '#8b94a3', fontSize: 10.5 }
+          axisLabel: { color: C_AXIS, fontSize: 10.5 }
         }
       ],
       series: [
@@ -293,8 +298,8 @@ window.BB = window.BB || {};
             color: {
               type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(249,115,22,0.20)' },
-                { offset: 1, color: 'rgba(249,115,22,0.01)' }
+                { offset: 0, color: T.rgba(T.brand, .10) },
+                { offset: 1, color: T.rgba(T.brand, .01) }
               ]
             }
           },
@@ -306,8 +311,8 @@ window.BB = window.BB || {};
               if (mk.dipIdx != null) {
                 arr.push({
                   xAxis: mk.dipIdx,
-                  lineStyle: { color: 'rgba(16,185,129,0.9)', width: 1.4, type: [4, 4] },
-                  label: { formatter: '下蹲', color: '#0f9d76' }
+                  lineStyle: { color: T.rgba(T.green, .9), width: 1.4, type: [4, 4] },
+                  label: { formatter: '下蹲', color: T.greenInk }
                 });
               }
               /* 一段视频里可能有多次出手，每次都标一条竖线 */
@@ -315,7 +320,7 @@ window.BB = window.BB || {};
               rel.forEach(function (i, k) {
                 arr.push({
                   xAxis: i,
-                  lineStyle: { color: 'rgba(249,115,22,0.95)', width: 2 },
+                  lineStyle: { color: T.rgba(T.brand, .95), width: 2 },
                   label: { formatter: k === 0 ? '出手' : '出手' + (k + 1), color: C_USER }
                 });
               });
@@ -333,7 +338,7 @@ window.BB = window.BB || {};
           name: '膝角(°)',
           type: 'line', smooth: true, symbol: 'none',
           data: knee,
-          lineStyle: { color: '#10b981', width: 1.8, type: [5, 3] }
+          lineStyle: { color: T.green, width: 1.8, type: [5, 3] }
         }
       ]
     };
@@ -512,7 +517,7 @@ window.BB = window.BB || {};
       title: {
         text: msg || '选一段视频后显示',
         left: 'center', top: 'middle',
-        textStyle: { color: '#a8b0bd', fontSize: 12, fontWeight: 400 }
+        textStyle: { color: C_AXIS, fontSize: 12, fontWeight: 400 }
       },
       xAxis: { show: false },
       yAxis: { show: false },

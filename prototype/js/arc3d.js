@@ -16,6 +16,7 @@
   'use strict';
 
   var G = 9.8;
+  var T = BB.THEME;
   var RIM_H = 3.05;          // 篮筐高度
   var RIM_R = 0.225;         // 篮筐半径
   var BOARD_BACK = 0.375;    // 篮板在筐心后方多远
@@ -145,7 +146,7 @@
         var q = P(gp[j]);
         j ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
       }
-      ctx.strokeStyle = 'rgba(234,88,12,.16)';
+      ctx.strokeStyle = T.rgba(T.brand, .16);
       ctx.lineWidth = 1.1;
       ctx.stroke();
     }
@@ -158,21 +159,21 @@
     /* 横向网格：沿投篮方向每条 1 米 */
     for (i = 0; i <= Math.ceil(d); i++) {
       var x = Math.min(i, d);
-      line(P([x, 0, -zr]), P([x, 0, zr]), x === 0 || Math.abs(x - d) < 1e-6 ? '#bcc6d4' : '#e3e8ef', 1);
+      line(P([x, 0, -zr]), P([x, 0, zr]), x === 0 || Math.abs(x - d) < 1e-6 ? T.lineStrong : T.lineSoft, 1);
     }
     /* 纵向两条边 */
     for (k = -1; k <= 1; k += 2) {
-      line(P([0, 0, zr * k]), P([d, 0, zr * k]), '#dde3ec', 1);
+      line(P([0, 0, zr * k]), P([d, 0, zr * k]), T.line, 1);
     }
     /* 地面上那条「投篮距离」 */
-    line(P([0, 0, 0]), P([d, 0, 0]), '#e2e8f0', 1, [5, 5]);
+    line(P([0, 0, 0]), P([d, 0, 0]), T.line, 1, [5, 5]);
   }
 
   function drawHoop(P, m) {
     var d = m ? m.d : 6.75;
     var xb = d + BOARD_BACK;
     /* 立柱 */
-    line(P([xb, 0, 0]), P([xb, RIM_H - 0.05, 0]), '#cbd5e1', 2);
+    line(P([xb, 0, 0]), P([xb, RIM_H - 0.05, 0]), T.line, 2);
     /* 篮板四角 */
     var corners = [[xb, RIM_H - 0.15, -0.9], [xb, RIM_H - 0.15, 0.9],
                    [xb, RIM_H + 0.9, 0.9], [xb, RIM_H + 0.9, -0.9]];
@@ -182,9 +183,9 @@
       var q = P(corners[i]); ctx.lineTo(q.x, q.y);
     }
     ctx.closePath();
-    ctx.fillStyle = 'rgba(203,213,225,.22)';
+    ctx.fillStyle = T.rgba(T.slate, .22);
     ctx.fill();
-    ctx.strokeStyle = '#94a3b8';
+    ctx.strokeStyle = T.slate;
     ctx.lineWidth = 1.2;
     ctx.stroke();
     /* 筐：水平面上的圆 */
@@ -194,7 +195,7 @@
       var p = P([d + Math.cos(a) * RIM_R, RIM_H, Math.sin(a) * RIM_R]);
       k ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
     }
-    ctx.strokeStyle = '#ea580c';
+    ctx.strokeStyle = T.cyan;
     ctx.lineWidth = 1.8;
     ctx.stroke();
   }
@@ -235,7 +236,7 @@
       var sp = P([m.pts[i][0], 0, 0]);
       i ? ctx.lineTo(sp.x, sp.y) : ctx.moveTo(sp.x, sp.y);
     }
-    ctx.strokeStyle = '#f1f5f9';
+    ctx.strokeStyle = T.lineSoft;
     ctx.lineWidth = 3;
     ctx.stroke();
 
@@ -245,37 +246,40 @@
       var q = P(m.pts[j]);
       j ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
     }
-    ctx.strokeStyle = '#f97316';
+    ctx.strokeStyle = T.brand;
     ctx.lineWidth = 2.4;
     ctx.lineCap = 'round';
     ctx.stroke();
 
     /* 出手点：竖线表示「出手高度」 */
     var base = P([0, 0, 0]), rel = P([0, m.relH, 0]);
-    line(base, rel, '#cbd5e1', 1, [3, 3]);
+    line(base, rel, T.line, 1, [3, 3]);
     ctx.beginPath();
     ctx.arc(rel.x, rel.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#f97316';
+    ctx.fillStyle = T.lime;
     ctx.fill();
-    label(m.relH.toFixed(2) + ' m', rel.x - 8, rel.y - 9, '#ea580c', 'right');
+    ctx.strokeStyle = T.rgba(T.dark, .55);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    label(m.relH.toFixed(2) + ' m', rel.x - 8, rel.y - 9, T.brandInk, 'right');
 
     /* 最高点 */
     var apex = P([m.apexX, m.apexY, 0]);
     ctx.beginPath();
     ctx.arc(apex.x, apex.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#fdba74';
+    ctx.fillStyle = T.lime;
     ctx.fill();
-    ctx.strokeStyle = '#f97316';
+    ctx.strokeStyle = T.brandInk;
     ctx.lineWidth = 1;
     ctx.stroke();
-    label('最高 ' + m.apexY.toFixed(2) + ' m', apex.x, apex.y - 12, '#c2410c');
+    label('最高 ' + m.apexY.toFixed(2) + ' m', apex.x, apex.y - 12, T.brandInk);
 
     /* 距离标尺 */
     var g0 = P([0, 0, 0]), g1 = P([m.d, 0, 0]);
-    label(m.d.toFixed(1) + ' m', (g0.x + g1.x) / 2, (g0.y + g1.y) / 2 + 13, '#94a3b8');
+    label(m.d.toFixed(1) + ' m', (g0.x + g1.x) / 2, (g0.y + g1.y) / 2 + 13, T.text3);
     var rimP = P([m.d, RIM_H, 0]);
     var bdP = P([m.d + BOARD_BACK, RIM_H, 0]);
-    label('筐高 3.05 m', Math.max(rimP.x, bdP.x) + 14, bdP.y, '#94a3b8', 'left');
+    label('筐高 3.05 m', Math.max(rimP.x, bdP.x) + 14, bdP.y, T.text3, 'left');
   }
 
   function drawEmpty(P, d) {
@@ -298,12 +302,12 @@
     else ctx.rect(bx, by, bw, bh);
     ctx.fillStyle = 'rgba(255,255,255,.94)';
     ctx.fill();
-    ctx.strokeStyle = '#eef1f6';
+    ctx.strokeStyle = T.lineSoft;
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    label(t1, W / 2, by + 19, '#7c8696', 'center', 12);
-    label(t2, W / 2, by + 36, '#a9b2c0', 'center', 11);
+    label(t1, W / 2, by + 19, T.text2, 'center', 12);
+    label(t2, W / 2, by + 36, T.text3, 'center', 11);
   }
 
   /* ---------- DOM ---------- */

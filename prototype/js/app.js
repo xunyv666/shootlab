@@ -10,6 +10,7 @@ window.BB = window.BB || {};
   'use strict';
 
   var D = BB.data;
+  var T = BB.THEME;
   var $ = function (id) { return document.getElementById(id); };
   var state = {
     shots: [], starId: D.activeStar, activeShot: null, res: null, exp: null, url: null,
@@ -334,7 +335,8 @@ window.BB = window.BB || {};
     if (BB.Arc3D) BB.Arc3D.update(sh, state.dist, idx, state.shots);
     var p = BB.Progress ? BB.Progress.apply(pr.p) : pr.p;
     var pct = Math.round(p * 100);
-    var col = pct >= 58 ? '#16a34a' : pct >= 34 ? '#f97316' : '#dc2626';
+    var col = pct >= 58 ? T.green : pct >= 34 ? T.amber : T.red;
+    var colInk = pct >= 58 ? T.greenInk : pct >= 34 ? T.amberInk : T.redInk;
     var C = 2 * Math.PI * 42;   // 半径 42 的周长
 
     var facts = pr.factors.map(function (f) {
@@ -347,12 +349,12 @@ window.BB = window.BB || {};
       '<div class="prob-top">' +
         '<div class="prob-dial">' +
           '<svg viewBox="0 0 100 100" width="92" height="92">' +
-            '<circle cx="50" cy="50" r="42" fill="none" stroke="#eef1f6" stroke-width="9"/>' +
+            '<circle cx="50" cy="50" r="42" fill="none" stroke="' + T.lineSoft + '" stroke-width="9"/>' +
             '<circle cx="50" cy="50" r="42" fill="none" stroke="' + col + '" stroke-width="9" ' +
               'stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" ' +
               'stroke-dashoffset="' + (C * (1 - p)).toFixed(1) + '"/>' +
           '</svg>' +
-          '<div class="num"><b style="color:' + col + '">' + pct + '%</b><span>预计命中</span></div>' +
+          '<div class="num"><b style="color:' + colInk + '">' + pct + '%</b><span>预计命中</span></div>' +
         '</div>' +
         '<div class="prob-meta">' +
           '<h3>第 ' + (idx + 1) + ' 次出手 · ' + state.dist.toFixed(1) + ' m' +
@@ -947,9 +949,9 @@ window.BB = window.BB || {};
     else bits.push('逐帧 ' + (X.curve ? X.curve.length : 0) + ' 帧');
     bits.push(X.shots.length + ' 次出手');
     if (X.meta.smallSubject) {
-      bits.push('<b style="color:#dc2626">人只占画面 ' + X.meta.subjectPx + ' 像素高，厘米类指标误差大，靠近拍会准很多</b>');
+      bits.push('<b style="color:' + T.red + '">人只占画面 ' + X.meta.subjectPx + ' 像素高，厘米类指标误差大，靠近拍会准很多</b>');
     } else if (X.meta.longVideo) {
-      bits.push('<b style="color:#d97706">视频偏长，只有 ' + X.meta.sampleFps + 'fps，建议裁到 10–20 秒再传</b>');
+      bits.push('<b style="color:' + T.amberInk + '">视频偏长，只有 ' + X.meta.sampleFps + 'fps，建议裁到 10–20 秒再传</b>');
     }
     $('expText').innerHTML = bits.join('<span class="exp-sep">·</span>');
   }

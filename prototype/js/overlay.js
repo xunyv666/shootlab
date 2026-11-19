@@ -14,8 +14,12 @@ window.BB = window.BB || {};
   var lastT = 0, lastShow = true;
   /* 实验模式：整段视频的逐帧骨骼（离线用 MediaPipe 提好，前端按时间取帧回放） */
   var bundle = null, bundleFps = 30, bundleSide = 'r';
-  var COLOR = '#f97316';
-  var COLOR_SOFT = 'rgba(249,115,22,0.35)';
+  var T = BB.THEME;
+  /* 骨骼连线用青色，关节点用青柠；青柠只做点状高亮，不做大面积填充 */
+  var BONE = T.rgba(T.cyan, .92);
+  var BONE_SOFT = T.rgba(T.cyan, .5);
+  var JOINT = T.lime;
+  var JOINT_SOFT = T.rgba(T.lime, .55);
   /* 空闲态：还没选视频时画布全空。以前这里默认跑一段程序化骨骼"演示"，
      看着像上个年代的教学 flash，而且是假的 —— 干脆不画。 */
   var idle = true;
@@ -150,36 +154,35 @@ window.BB = window.BB || {};
   }
 
   function drawSkeleton(pose, p) {
-    var body = COLOR;
     // 后腿（左移一点，制造前后腿的立体感）
     var off = 0.026;
-    line([pose.hip[0] - off, pose.hip[1]], [pose.knee[0] - off, pose.knee[1]], 'rgba(249,115,22,0.28)', 4.5);
-    line([pose.knee[0] - off, pose.knee[1]], [pose.ankle[0] - off, pose.ankle[1]], 'rgba(249,115,22,0.28)', 4.5);
+    line([pose.hip[0] - off, pose.hip[1]], [pose.knee[0] - off, pose.knee[1]], T.rgba(T.cyan, .28), 4.5);
+    line([pose.knee[0] - off, pose.knee[1]], [pose.ankle[0] - off, pose.ankle[1]], T.rgba(T.cyan, .28), 4.5);
     // 躯干
-    line(pose.hip, pose.sh, body, 5);
+    line(pose.hip, pose.sh, BONE, 5);
     // 前腿
-    line(pose.hip, pose.knee, COLOR_SOFT, 5);
-    line(pose.knee, pose.ankle, COLOR_SOFT, 5);
+    line(pose.hip, pose.knee, BONE_SOFT, 5);
+    line(pose.knee, pose.ankle, BONE_SOFT, 5);
     // 颈
-    line(pose.sh, [pose.head[0], pose.head[1] + 0.034], body, 4.5);
+    line(pose.sh, [pose.head[0], pose.head[1] + 0.034], BONE, 4.5);
     // 投篮臂
-    line(pose.sh, pose.elbow, body, 5);
-    line(pose.elbow, pose.wrist, body, 5);
+    line(pose.sh, pose.elbow, BONE, 5);
+    line(pose.elbow, pose.wrist, BONE, 5);
     // 非投篮臂（示意，稍短）
-    line(pose.sh, [pose.sh[0] - 0.045, pose.sh[1] + 0.10], COLOR_SOFT, 4);
-    line([pose.sh[0] - 0.045, pose.sh[1] + 0.10], [pose.sh[0] - 0.03, pose.sh[1] + 0.19], COLOR_SOFT, 4);
+    line(pose.sh, [pose.sh[0] - 0.045, pose.sh[1] + 0.10], BONE_SOFT, 4);
+    line([pose.sh[0] - 0.045, pose.sh[1] + 0.10], [pose.sh[0] - 0.03, pose.sh[1] + 0.19], BONE_SOFT, 4);
 
-    joint(pose.sh, body, 4);
-    joint(pose.hip, body, 4);
-    joint(pose.knee, COLOR_SOFT, 3.5);
-    joint(pose.ankle, COLOR_SOFT, 3.5);
-    joint(pose.elbow, body, 4);
-    joint(pose.wrist, body, 4.5);
+    joint(pose.sh, JOINT, 4);
+    joint(pose.hip, JOINT, 4);
+    joint(pose.knee, JOINT_SOFT, 3.5);
+    joint(pose.ankle, JOINT_SOFT, 3.5);
+    joint(pose.elbow, JOINT, 4);
+    joint(pose.wrist, JOINT, 4.5);
 
     // 头
     ctx.beginPath();
-    ctx.fillStyle = 'rgba(249,115,22,0.18)';
-    ctx.strokeStyle = body;
+    ctx.fillStyle = T.rgba(T.lime, .14);
+    ctx.strokeStyle = BONE;
     ctx.lineWidth = 3;
     ctx.arc(sx(pose.head[0]), sy(pose.head[1]), sy(0.038), 0, Math.PI * 2);
     ctx.fill();
@@ -195,18 +198,18 @@ window.BB = window.BB || {};
       var dx = pose.wrist[0] - pose.elbow[0];
       var dy = pose.wrist[1] - pose.elbow[1];
       var len = Math.sqrt(dx * dx + dy * dy) || 1;
-      line([vx, vy], [vx + 0.13, vy], 'rgba(37,99,235,0.45)', 1.5, [4, 4]);
-      line([vx, vy], [vx + dx / len * 0.13, vy + dy / len * 0.13], 'rgba(37,99,235,0.7)', 1.5, [4, 4]);
+      line([vx, vy], [vx + 0.13, vy], T.rgba(T.cyan, .32), 1.5, [4, 4]);
+      line([vx, vy], [vx + dx / len * 0.13, vy + dy / len * 0.13], T.rgba(T.cyan, .32), 1.5, [4, 4]);
       var ang = Math.atan2(-dy, dx);
       if (ang > 0.05) {
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(37,99,235,0.85)';
+        ctx.strokeStyle = T.rgba(T.cyan, .62);
         ctx.lineWidth = 1.5;
         ctx.arc(sx(vx), sy(vy), sy(0.055), 0, -ang, true);
         ctx.stroke();
       }
       ctx.beginPath();
-      ctx.fillStyle = '#9dc0ff';
+      ctx.fillStyle = T.brandLine;
       ctx.font = '600 12px system-ui, "PingFang SC", "Microsoft YaHei", sans-serif';
       ctx.fillText('出手角', sx(vx) + 8, sy(vy) + 20);
       ctx.restore();
@@ -231,18 +234,18 @@ window.BB = window.BB || {};
         var tx = x0 + (x1 - x0) * kk;
         var ty = y0 + (y1 - y0) * kk * kk + 0.075 * Math.sin(Math.PI * kk) - 0.075 * kk * kk;
         ctx.beginPath();
-        ctx.fillStyle = COLOR;
+        ctx.fillStyle = JOINT;
         ctx.arc(sx(tx), sy(ty), r * (1 - i * 0.18), 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
     }
     ctx.beginPath();
-    ctx.fillStyle = '#f97316';
+    ctx.fillStyle = JOINT;
     ctx.arc(sx(bx), sy(by), r, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(120,53,15,0.6)';
+    ctx.strokeStyle = T.rgba(T.dark, .65);
     ctx.lineWidth = 1;
     ctx.arc(sx(bx), sy(by), r, 0, Math.PI * 2);
     ctx.stroke();
@@ -259,7 +262,7 @@ window.BB = window.BB || {};
     var pairs = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24],
       [23, 25], [25, 27], [24, 26], [26, 28]];
     ctx.save();
-    ctx.strokeStyle = COLOR;
+    ctx.strokeStyle = BONE;
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     pairs.forEach(function (p) {
@@ -272,7 +275,7 @@ window.BB = window.BB || {};
     ctx.restore();
     [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach(function (i) {
       if (!lm[i]) return;
-      joint([lm[i].x, lm[i].y], '#f97316', 3.5);
+      joint([lm[i].x, lm[i].y], JOINT, 3.5);
     });
   }
 
@@ -308,14 +311,14 @@ window.BB = window.BB || {};
     ctx.lineCap = 'round';
     ctx.shadowColor = 'rgba(0,0,0,0.6)';
     ctx.shadowBlur = 5 * k;
-    NEAR_PAIRS.forEach(function (p) { seg(f, p[0], p[1], COLOR, 4.2 * k); });
-    near.forEach(function (p) { seg(f, p[0], p[1], COLOR, 4.6 * k); });
-    far.forEach(function (p) { seg(f, p[0], p[1], 'rgba(249,115,22,0.42)', 3 * k); });
+    NEAR_PAIRS.forEach(function (p) { seg(f, p[0], p[1], BONE, 4.2 * k); });
+    near.forEach(function (p) { seg(f, p[0], p[1], BONE, 4.6 * k); });
+    far.forEach(function (p) { seg(f, p[0], p[1], T.rgba(T.cyan, .42), 3 * k); });
     ctx.restore();
     var farJ = (bundleSide === 'l' ? [14, 16] : [13, 15]);
     JOINTS.forEach(function (i) {
       var isFar = farJ.indexOf(i) >= 0;
-      joint([f[i * 2], f[i * 2 + 1]], isFar ? 'rgba(249,115,22,0.45)' : COLOR,
+      joint([f[i * 2], f[i * 2 + 1]], isFar ? T.rgba(T.lime, .5) : JOINT,
         (isFar ? 2.6 : 3.6) * k);
     });
   }

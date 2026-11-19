@@ -316,9 +316,9 @@ try {
     };
   })())`));
   console.log('TOKENS ' + JSON.stringify(tokens, null, 2));
-  push('卡片圆角来自令牌（16px）', tokens.card && tokens.card.borderRadius === '16px', tokens.card?.borderRadius);
+  push('卡片圆角来自令牌（12px）', tokens.card && tokens.card.borderRadius === '12px', tokens.card?.borderRadius);
   push('按钮圆角来自令牌（10px）', tokens.btn && tokens.btn.borderRadius === '10px', tokens.btn?.borderRadius);
-  push('输入框圆角来自令牌（7px）', tokens.input && tokens.input.borderRadius === '7px', tokens.input?.borderRadius);
+  push('输入框圆角来自令牌（8px）', tokens.input && tokens.input.borderRadius === '8px', tokens.input?.borderRadius);
   push('一级导航为胶囊形', tokens.tabActive && tokens.tabActive.borderRadius === '999px', tokens.tabActive?.borderRadius);
   push('底部胶囊为胶囊形', tokens.nav && tokens.nav.borderRadius === '999px', tokens.nav?.borderRadius);
   push('卡片标题字号 11px', tokens.h2 && tokens.h2.fontSize === '11px', tokens.h2?.fontSize);

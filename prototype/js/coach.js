@@ -40,12 +40,13 @@ window.BB = window.BB || {};
   var box = { x: 0, y: 0, w: 0, h: 0 };
   var dpr = 1;
 
+  var T = BB.THEME;
   var C = {
-    neu: '#f97316',      // 中性：只做指示
-    ok: '#22c55e',       // 达标
-    bad: '#ef4444',      // 要改
-    ink: 'rgba(8,11,17,.86)',
-    white: '#ffffff'
+    neu: T.cyan,            // 中性：只做指示（青色辅助）
+    ok: T.green,            // 达标
+    bad: T.red,             // 要改
+    ink: T.rgba(T.dark, .86),
+    white: T.white
   };
 
   /* MediaPipe 关键点 */

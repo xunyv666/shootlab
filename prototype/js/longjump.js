@@ -14,6 +14,7 @@ window.BB = window.BB || {};
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
+  var T = BB.THEME;
 
   var J = {
     inited: false,
@@ -392,7 +393,7 @@ window.BB = window.BB || {};
 
   /* ---------------- 起跳时序曲线 ---------------- */
 
-  var C_HIP = '#f97316', C_KNEE = '#16a34a', C_ANKLE = '#2563eb', C_ARM = '#94a3b8';
+  var C_HIP = T.lime, C_KNEE = T.cyan, C_ANKLE = T.brand, C_ARM = T.slate;
 
   function drawChart() {
     var cv = J.chart;
@@ -406,7 +407,7 @@ window.BB = window.BB || {};
 
     var j = currentJump();
     if (!j || !j.timing || !j.timing.length) {
-      ctx.fillStyle = '#aab3c0';
+      ctx.fillStyle = T.text3;
       ctx.font = '12px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -426,14 +427,14 @@ window.BB = window.BB || {};
     function Y(deg) { return pad.t + (1 - (deg - yMin) / (yMax - yMin)) * ih; }
 
     /* 腾空区间底色 */
-    ctx.fillStyle = 'rgba(249,115,22,.06)';
+    ctx.fillStyle = T.rgba(T.brand, .06);
     ctx.fillRect(X(0), pad.t, Math.max(1, X(j.dur * 1000) - X(0)), ih);
 
     /* 横向网格 */
-    ctx.strokeStyle = '#eef1f5';
+    ctx.strokeStyle = T.lineSoft;
     ctx.lineWidth = 1;
     ctx.font = '10px system-ui, sans-serif';
-    ctx.fillStyle = '#aab3c0';
+    ctx.fillStyle = T.text3;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     [0, 45, 90, 135, 180].forEach(function (deg) {
@@ -454,7 +455,7 @@ window.BB = window.BB || {};
     ctx.lineTo(X(0), pad.t + ih);
     ctx.stroke();
     ctx.restore();
-    ctx.fillStyle = '#8b94a3';
+    ctx.fillStyle = T.text3;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('起跳', X(0), pad.t + 1);
@@ -494,7 +495,7 @@ window.BB = window.BB || {};
     });
 
     /* 轴标签 */
-    ctx.fillStyle = '#aab3c0';
+    ctx.fillStyle = T.text3;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('关节伸展角', pad.l, 1);
@@ -538,7 +539,7 @@ window.BB = window.BB || {};
       /* 校准中：已点的第一端 + 跟随鼠标的橡皮筋 */
       var p1 = J.ruler.p1 || J.hoverPt || J.ruler.p0;
       drawRulerLine(ctx, box, J.ruler.p0, p1, J.ruler.p1 ? '…' : '');
-      dot(ctx, box, J.ruler.p0, '#f97316');
+      dot(ctx, box, J.ruler.p0, T.brand);
     }
 
     if (!J.res || !J.res.bundle || !J.res.bundle.length) return;
@@ -563,11 +564,11 @@ window.BB = window.BB || {};
       ctx.save();
       ctx.setLineDash([5, 4]);
       ctx.lineWidth = 1.4;
-      ctx.strokeStyle = 'rgba(249,115,22,.85)';
+      ctx.strokeStyle = T.rgba(T.brand, .85);
       ctx.beginPath();
       ctx.moveTo(xa, top); ctx.lineTo(xa, groundY + 8);
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(22,163,74,.85)';
+      ctx.strokeStyle = T.rgba(T.brand, .85);
       ctx.beginPath();
       ctx.moveTo(xb, top); ctx.lineTo(xb, groundY + 8);
       ctx.stroke();
@@ -605,12 +606,12 @@ window.BB = window.BB || {};
       ctx.fillText(label, mx, ay - 12.5);
 
       /* 起跳点 / 落地点 */
-      dot(ctx, box, [j.x0, (J.res.meta.toeBaseline || 0.97)], '#f97316');
-      dot(ctx, box, [j.x1, (J.res.meta.heelBaseline || 0.9)], '#16a34a');
+      dot(ctx, box, [j.x0, (J.res.meta.toeBaseline || 0.97)], T.brand);
+      dot(ctx, box, [j.x1, (J.res.meta.heelBaseline || 0.9)], T.brand);
     }
 
     /* ---- 骨架 ---- */
-    ctx.strokeStyle = 'rgba(249,115,22,.92)';
+    ctx.strokeStyle = T.rgba(T.cyan, .92);
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -620,8 +621,8 @@ window.BB = window.BB || {};
       ctx.lineTo(px(b[1]), py(b[1]));
       ctx.stroke();
     });
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = 'rgba(234,88,12,.9)';
+    ctx.fillStyle = T.lime;
+    ctx.strokeStyle = T.rgba(T.dark, .55);
     ctx.lineWidth = 1.6;
     [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 31, 32].forEach(function (k) {
       ctx.beginPath();

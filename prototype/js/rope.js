@@ -13,6 +13,7 @@ window.BB = window.BB || {};
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
+  var T = BB.THEME;
 
   var R = {
     inited: false,
@@ -312,7 +313,7 @@ window.BB = window.BB || {};
     ctx.clearRect(0, 0, w, h);
 
     if (!R.res || !R.res.curve || !R.res.curve.length) {
-      ctx.fillStyle = '#aab3c0';
+      ctx.fillStyle = T.text3;
       ctx.font = '12px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -338,10 +339,10 @@ window.BB = window.BB || {};
     function Y(v) { return pad.t + (1 - Math.max(0, Math.min(1, v / maxV))) * ih; }
 
     /* 横向网格 + 刻度 */
-    ctx.strokeStyle = '#eef1f5';
+    ctx.strokeStyle = T.lineSoft;
     ctx.lineWidth = 1;
     ctx.font = '10px system-ui, sans-serif';
-    ctx.fillStyle = '#aab3c0';
+    ctx.fillStyle = T.text3;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     for (var g = 0; g <= 2; g++) {
@@ -357,7 +358,7 @@ window.BB = window.BB || {};
     /* 断绳区间底色 */
     (R.res.breaks || []).forEach(function (b) {
       var x0 = X(b.t0), x1 = X(b.t1);
-      ctx.fillStyle = b.type === 'low' ? 'rgba(220,38,38,.06)' : 'rgba(217,119,6,.07)';
+      ctx.fillStyle = b.type === 'low' ? T.rgba(T.red, .06) : T.rgba(T.amber, .08);
       ctx.fillRect(x0, pad.t, Math.max(1, x1 - x0), ih);
     });
 
@@ -365,7 +366,7 @@ window.BB = window.BB || {};
     var ty = Y(thr);
     ctx.save();
     ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = 'rgba(249,115,22,.45)';
+    ctx.strokeStyle = T.rgba(T.cyan, .55);
     ctx.beginPath();
     ctx.moveTo(pad.l, ty);
     ctx.lineTo(w - pad.r, ty);
@@ -373,7 +374,7 @@ window.BB = window.BB || {};
     ctx.restore();
 
     /* 主信号 */
-    ctx.strokeStyle = '#f97316';
+    ctx.strokeStyle = T.brand;
     ctx.lineWidth = 1.8;
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -393,7 +394,7 @@ window.BB = window.BB || {};
       var x = X(jump.t);
       var y = Y(jump.amp);
       ctx.beginPath();
-      ctx.fillStyle = jump.low ? '#d97706' : '#ea580c';
+      ctx.fillStyle = jump.low ? T.amber : T.lime;
       ctx.arc(x, y, jump.low ? 2.4 : 3, 0, Math.PI * 2);
       ctx.fill();
     });
@@ -410,7 +411,7 @@ window.BB = window.BB || {};
     }
 
     /* 轴标签 */
-    ctx.fillStyle = '#aab3c0';
+    ctx.fillStyle = T.text3;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('身体比例', pad.l, 2);
@@ -453,7 +454,7 @@ window.BB = window.BB || {};
     var baseY = box.y + (R.res.meta.ankleBaseline || 0) * box.h;
     ctx.save();
     ctx.setLineDash([6, 5]);
-    ctx.strokeStyle = 'rgba(249,115,22,.55)';
+    ctx.strokeStyle = T.rgba(T.cyan, .32);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(box.x + 4, baseY);
@@ -462,7 +463,7 @@ window.BB = window.BB || {};
     ctx.restore();
 
     /* 骨架 */
-    ctx.strokeStyle = 'rgba(249,115,22,.92)';
+    ctx.strokeStyle = T.rgba(T.cyan, .92);
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -472,8 +473,8 @@ window.BB = window.BB || {};
       ctx.lineTo(px(b[1]), py(b[1]));
       ctx.stroke();
     });
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = 'rgba(234,88,12,.9)';
+    ctx.fillStyle = T.lime;
+    ctx.strokeStyle = T.rgba(T.dark, .55);
     ctx.lineWidth = 1.6;
     for (var k = 0; k < 33; k++) {
       if (k === 0 || k === 11 || k === 12 || k === 13 || k === 14 || k === 15 || k === 16 ||
@@ -491,7 +492,7 @@ window.BB = window.BB || {};
       var hx = (px(23) + px(24)) / 2;
       var hy = (py(23) + py(24)) / 2;
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(249,115,22,.9)';
+      ctx.strokeStyle = T.rgba(T.lime, .9);
       ctx.lineWidth = 2;
       ctx.arc(hx, hy, 18, 0, Math.PI * 2);
       ctx.stroke();

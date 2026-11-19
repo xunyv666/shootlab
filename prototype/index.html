@@ -66,16 +66,7 @@
 
         <!-- 空态主视觉 -->
         <div class="drop" id="drop">
-          <div class="drop-art">
-            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
-              <circle cx="60" cy="27" r="6" stroke="currentColor" stroke-width="2"/>
-              <path d="M60 33v17M60 50l-9 14M60 50l9 14M60 38l-11 7M60 38l11 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M60 12v9M56.5 15.5 60 12l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
-            </svg>
-          </div>
           <h3>拖一个投篮视频进来</h3>
-          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
           <div class="drop-steps">
             <span><b>1</b>选择视频</span>
             <i></i>
@@ -283,19 +274,7 @@
         <canvas id="ropeOverlay"></canvas>
 
         <div class="drop" id="ropeDrop">
-          <div class="drop-art">
-            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
-              <path d="M30 18c0 26 60 26 60 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".75"/>
-              <circle cx="30" cy="15" r="3.2" stroke="currentColor" stroke-width="2"/>
-              <circle cx="90" cy="15" r="3.2" stroke="currentColor" stroke-width="2"/>
-              <circle cx="60" cy="40" r="5.4" stroke="currentColor" stroke-width="2"/>
-              <path d="M60 45.5v12M60 57.5l-7 10M60 57.5l7 10M60 49l-9 5M60 49l9 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M60 68v6M57 71l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".65"/>
-            </svg>
-          </div>
           <h3>拖一段跳绳视频进来</h3>
-          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
           <div class="drop-steps">
             <span><b>1</b>选择视频</span>
             <i></i>
@@ -421,16 +400,7 @@
         <video id="pushupVideo" playsinline muted></video>
         <canvas id="pushupOverlay"></canvas>
         <div class="drop" id="pushupDrop">
-          <div class="drop-art">
-            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
-              <circle cx="29" cy="34" r="5" stroke="currentColor" stroke-width="2"/>
-              <path d="M35 37 78 48M43 41 36 65M68 46 78 66M47 42 61 57M61 57 74 43" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M20 69h86" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
-            </svg>
-          </div>
           <h3>拖一段俯卧撑视频进来</h3>
-          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
           <div class="drop-steps"><span><b>1</b>选择视频</span><i></i><span><b>2</b>识别屈肘周期</span><i></i><span><b>3</b>次数与标准度</span></div>
           <div class="drop-actions">
             <label class="btn btn-primary btn-lg" for="pushupFile">选一个俯卧撑视频</label>
@@ -496,19 +466,7 @@
         <canvas id="ljOverlay"></canvas>
 
         <div class="drop" id="ljDrop">
-          <div class="drop-art">
-            <svg viewBox="0 0 120 88" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="118" height="86" rx="12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 5" opacity=".38"/>
-              <path d="M8 70 H112" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
-              <path d="M20 70 V64 M32 70 V64 M44 70 V64 M56 70 V64 M68 70 V64 M80 70 V64 M92 70 V64" stroke="currentColor" stroke-width="1.2" opacity=".3"/>
-              <circle cx="30" cy="34" r="4.6" stroke="currentColor" stroke-width="2"/>
-              <path d="M30 39 v10M30 49 l-6 8M30 49 l7 8M30 42 l-8 5M30 42 l8 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M46 30c8-10 22-13 34-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3 4" opacity=".6"/>
-              <path d="M84 17 l4 4 -5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
-            </svg>
-          </div>
           <h3>拖一段立定跳远视频进来</h3>
-          <p class="drop-sub">全程在你的电脑里算，不上传、不联网</p>
           <div class="drop-steps">
             <span><b>1</b>选择视频</span>
             <i></i>
@@ -729,6 +687,7 @@
 <script src="js/pose_exp.js"></script>
 <script src="js/metrics.js"></script>
 <script src="js/video-player.js"></script>
+<script src="js/theme.js"></script>
 <script src="js/overlay.js"></script>
 <script src="js/arc2d.js"></script>
 <script src="js/ghost.js"></script>

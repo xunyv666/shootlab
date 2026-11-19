@@ -16,6 +16,7 @@ window.BB = window.BB || {};
 (function (BB) {
   'use strict';
 
+  var T = BB.THEME;
   var G = 9.81;
   var HOOP_H = 3.05;        // 篮筐高
   var HOOP_R = 0.225;       // 篮圈半径
@@ -253,30 +254,30 @@ window.BB = window.BB || {};
     var parts = [];
     parts.push('<svg viewBox="0 0 ' + W + ' ' + H + '" class="zone-map">');
     parts.push('<defs><linearGradient id="zg" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0" stop-color="#faf3e8"/><stop offset="1" stop-color="#f3e7d5"/></linearGradient></defs>');
+      '<stop offset="0" stop-color="#F8FAFC"/><stop offset="1" stop-color="#EEF2F7"/></linearGradient></defs>');
     parts.push('<rect x="' + sx(0) + '" y="' + sy(BOARD_D_M) + '" width="' + (sx(BOARD_W_M) - sx(0)) +
-      '" height="' + (sy(0) - sy(BOARD_D_M)) + '" fill="url(#zg)" stroke="#d8c4a4" stroke-width="1.5" rx="3"/>');
+      '" height="' + (sy(0) - sy(BOARD_D_M)) + '" fill="url(#zg)" stroke="' + T.lineStrong + '" stroke-width="1.5" rx="3"/>');
     /* 三分线：两侧直线 + 中间弧 */
     var baseL = sx(0.9), baseR = sx(BOARD_W_M - 0.9);
     var hoopY = sy(1.575);
     parts.push('<path d="M' + baseL + ' ' + sy(0) + ' L' + baseL + ' ' + (hoopY - r3) +
       ' A' + r3 + ' ' + r3 + ' 0 0 0 ' + baseR + ' ' + (hoopY - r3) +
-      ' L' + baseR + ' ' + sy(0) + '" fill="none" stroke="#c9a06a" stroke-width="1.8"/>');
+      ' L' + baseR + ' ' + sy(0) + '" fill="none" stroke="' + T.lineStrong + '" stroke-width="1.8"/>');
     /* 罚球圈 */
     var ftR = 1.8 / BOARD_W_M * (W - PAD * 2);
     parts.push('<circle cx="' + sx(cx) + '" cy="' + sy(4.6) + '" r="' + ftR +
-      '" fill="none" stroke="#c9a06a" stroke-width="1.2" stroke-dasharray="4 3"/>');
+      '" fill="none" stroke="' + T.lineStrong + '" stroke-width="1.2" stroke-dasharray="4 3"/>');
     /* 篮板 + 篮筐 */
-    parts.push('<rect x="' + (sx(cx) - 9) + '" y="' + (sy(1.2) - 3) + '" width="18" height="4" fill="#8a6a45" rx="1"/>');
-    parts.push('<circle cx="' + sx(cx) + '" cy="' + hoopY + '" r="5.5" fill="none" stroke="#ea580c" stroke-width="2"/>');
+    parts.push('<rect x="' + (sx(cx) - 9) + '" y="' + (sy(1.2) - 3) + '" width="18" height="4" fill="' + T.text3 + '" rx="1"/>');
+    parts.push('<circle cx="' + sx(cx) + '" cy="' + hoopY + '" r="5.5" fill="none" stroke="' + T.brand2 + '" stroke-width="2"/>');
 
     SPOTS.forEach(function (s, i) {
       /* 点位表的 x/y 是「从篮筐起算的偏移」，换算成场地坐标再画 */
       var px = sx(cx + s.x);
       var py = sy(1.575 + s.y);
       parts.push('<g class="zone-dot" data-spot="' + s.id + '">' +
-        '<circle cx="' + px + '" cy="' + py + '" r="11" fill="#fff" stroke="#f97316" stroke-width="2"/>' +
-        '<text x="' + px + '" y="' + (py + 4) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#c2410c">' +
+        '<circle cx="' + px + '" cy="' + py + '" r="11" fill="#fff" stroke="' + T.brand + '" stroke-width="2"/>' +
+        '<text x="' + px + '" y="' + (py + 4) + '" text-anchor="middle" font-size="11" font-weight="700" fill="' + T.brandInk + '">' +
         (i + 1) + '</text></g>');
     });
     parts.push('</svg>');

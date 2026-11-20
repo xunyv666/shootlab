@@ -18,6 +18,7 @@ window.BB = window.BB || {};
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
+  var T = BB.THEME;
   var BONES = [
     [11, 13], [13, 15], [11, 23], [23, 27], [15, 17], [15, 19], [15, 21],
     [12, 14], [14, 16], [12, 24], [24, 28], [16, 18], [16, 20], [16, 22],
@@ -89,16 +90,16 @@ window.BB = window.BB || {};
     BONES.forEach(function (bone) {
       var a = pt(bone[0]), c = pt(bone[1]);
       if (a.v < 0.3 || c.v < 0.3) return;
-      ctx.strokeStyle = 'rgba(249,115,22,.92)';
+      ctx.strokeStyle = T.rgba(T.cyan, .92);
       ctx.lineWidth = 3.2;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(c.x, c.y); ctx.stroke();
     });
     JOINTS.forEach(function (k) {
       var p = pt(k);
       if (p.v < 0.3) return;
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = T.dark;
       ctx.beginPath(); ctx.arc(p.x, p.y, 3.6, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#f97316';
+      ctx.fillStyle = T.lime;
       ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
     });
   }
@@ -342,6 +343,8 @@ window.BB = window.BB || {};
         updateHud(S.lastStats || (S.live ? S.live.stats() : null), (performance.now() - S.startedAt) / 1000);
       }, 500);
     } catch (err) {
+      /* 失败可能发生在 has-video 之后（识别引擎/播放阶段），先把舞台还原成空态 */
+      if (S.stage) S.stage.classList.remove('has-video');
       await stop(false);
       var msg = String(err && err.message ? err.message : err);
       if (/NotAllowed|Permission/i.test(msg)) msg = '摄像头权限被拒绝。浏览器地址栏左侧的图标里允许摄像头后重试。';
@@ -358,7 +361,10 @@ window.BB = window.BB || {};
    * @returns {Promise<File|null>}
    */
   async function stop(analyze) {
-    if (!S.active && !S.stream) return null;
+    /* 失败路径里 HUD 已经挂到舞台上，但会话还没建立（active/stream 都为空）。
+       只按这两个状态判断会直接返回，HUD 和 is-cam 就永远留在画面上，
+       所以只要 HUD 还在，也必须走一遍清理。 */
+    if (!S.active && !S.stream && !S.hud) return null;
     S.active = false;
     if (S.timer) { clearInterval(S.timer); S.timer = 0; }
     if (S.recTimer) { clearTimeout(S.recTimer); S.recTimer = 0; }

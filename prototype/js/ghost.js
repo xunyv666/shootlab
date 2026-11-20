@@ -19,6 +19,8 @@ window.BB = window.BB || {};
 (function (BB) {
   'use strict';
 
+  var T = BB.THEME;
+
   /* 人体测量学比例（Drillis & Contini，按身高归一化） */
   var R = {
     shank: 0.246,    // 膝 → 踝
@@ -130,7 +132,7 @@ window.BB = window.BB || {};
 
   /* ---------- 绘制 ---------- */
   var L_HIP = 23, R_HIP = 24, L_AN = 27, R_AN = 28;
-  var COL = '#22c55e';
+  var COL = T.lime;
 
   function render(ctx, box, frame, side, meta) {
     if (!P.on || !frame || !box || !box.w) return;

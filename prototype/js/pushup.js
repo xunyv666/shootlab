@@ -7,6 +7,7 @@ window.BB = window.BB || {};
 (function (BB) {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
+  var T = BB.THEME;
   var P = {
     inited: false, visible: false, video: null, overlay: null, octx: null,
     chart: null, cctx: null, url: null, res: null, duration: 0, playing: false,
@@ -67,22 +68,22 @@ window.BB = window.BB || {};
     var s = fitCanvas(P.overlay, P.octx); if (!s) return;
     var ctx = P.octx; ctx.clearRect(0, 0, s.w, s.h); var f = nearestFrame(t); if (!f || !f.pts) return;
     var b = videoBox(s.w, s.h); function pt(k) { return { x: b.x + f.pts[k * 3] * b.w, y: b.y + f.pts[k * 3 + 1] * b.h }; }
-    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = T.rgba(T.cyan, .92);
     BONES.forEach(function (bone) { var a = pt(bone[0]), c = pt(bone[1]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(c.x, c.y); ctx.stroke(); });
-    [11, 13, 15, 23, 27, 12, 14, 16, 24, 28].forEach(function (k) { var p = pt(k); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2); ctx.fill(); });
+    [11, 13, 15, 23, 27, 12, 14, 16, 24, 28].forEach(function (k) { var p = pt(k); ctx.fillStyle = T.lime; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = T.rgba(T.dark, .55); ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2); ctx.fill(); });
     if (f.arm != null) { ctx.fillStyle = 'rgba(17,24,39,.82)'; ctx.font = '12px system-ui'; ctx.fillText('肘角 ' + Math.round(f.arm) + '° · 躯干 ' + Math.round(f.body || 0) + '°', b.x + 12, b.y + 22); }
   }
   function drawChart(t) {
     var s = fitCanvas(P.chart, P.cctx); if (!s) return; var ctx = P.cctx; ctx.clearRect(0, 0, s.w, s.h);
     var fs = P.res && P.res.frames ? P.res.frames.filter(function (f) { return f.arm != null; }) : [];
-    ctx.strokeStyle = '#edf0f5'; ctx.lineWidth = 1; for (var y = 24; y < s.h - 20; y += (s.h - 44) / 4) { ctx.beginPath(); ctx.moveTo(34, y); ctx.lineTo(s.w - 12, y); ctx.stroke(); }
-    if (!fs.length) { ctx.fillStyle = '#97a0ad'; ctx.font = '13px system-ui'; ctx.fillText('分析后显示肘角与躯干曲线', 22, s.h / 2); return; }
+    ctx.strokeStyle = T.lineSoft; ctx.lineWidth = 1; for (var y = 24; y < s.h - 20; y += (s.h - 44) / 4) { ctx.beginPath(); ctx.moveTo(34, y); ctx.lineTo(s.w - 12, y); ctx.stroke(); }
+    if (!fs.length) { ctx.fillStyle = T.text3; ctx.font = '13px system-ui'; ctx.fillText('分析后显示肘角与躯干曲线', 22, s.h / 2); return; }
     var dur = P.duration || fs[fs.length - 1].t || 1, x = function (v) { return 34 + v / dur * (s.w - 46); }, yArm = function (v) { return 20 + (180 - Math.max(40, Math.min(180, v))) / 140 * (s.h - 48); }, yBody = function (v) { return 20 + (190 - Math.max(80, Math.min(190, v))) / 110 * (s.h - 48); };
     function line(key, color, yfn) { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); var started = false; fs.forEach(function (f) { var v = f[key]; if (v == null) { started = false; return; } if (!started) { ctx.moveTo(x(f.t), yfn(v)); started = true; } else ctx.lineTo(x(f.t), yfn(v)); }); ctx.stroke(); }
-    line('arm', '#f97316', yArm); line('body', '#2563eb', yBody);
-    (P.res.reps || []).forEach(function (r) { ctx.strokeStyle = 'rgba(22,163,74,.25)'; ctx.beginPath(); ctx.moveTo(x(r.t), 12); ctx.lineTo(x(r.t), s.h - 20); ctx.stroke(); });
-    if (t != null) { ctx.strokeStyle = '#111827'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x(t), 10); ctx.lineTo(x(t), s.h - 18); ctx.stroke(); }
-    ctx.fillStyle = '#f97316'; ctx.fillRect(38, s.h - 12, 16, 3); ctx.fillStyle = '#4b78d0'; ctx.fillRect(116, s.h - 12, 16, 3); ctx.fillStyle = '#697386'; ctx.font = '11px system-ui'; ctx.fillText('肘角', 58, s.h - 9); ctx.fillText('躯干角', 136, s.h - 9);
+    line('arm', T.brand, yArm); line('body', T.cyan, yBody);
+    (P.res.reps || []).forEach(function (r) { ctx.strokeStyle = T.rgba(T.green, .25); ctx.beginPath(); ctx.moveTo(x(r.t), 12); ctx.lineTo(x(r.t), s.h - 20); ctx.stroke(); });
+    if (t != null) { ctx.strokeStyle = T.dark; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x(t), 10); ctx.lineTo(x(t), s.h - 18); ctx.stroke(); }
+    ctx.fillStyle = T.brand; ctx.fillRect(38, s.h - 12, 16, 3); ctx.fillStyle = T.cyan; ctx.fillRect(116, s.h - 12, 16, 3); ctx.fillStyle = T.text3; ctx.font = '11px system-ui'; ctx.fillText('肘角', 58, s.h - 9); ctx.fillText('躯干角', 136, s.h - 9);
   }
   function updateFromVideo() {
     if (!P.video) return; var t = P.video.currentTime || 0, dur = P.duration || P.video.duration || 0, ratio = dur ? t / dur : 0;
